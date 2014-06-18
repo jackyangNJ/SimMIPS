@@ -68,7 +68,15 @@ module ID(
 	wire instr_MTLO  = (instr_op == `OP_SPECIAL  && instr_tail == `TAIL_MTLO);
 	wire instr_MOVN  = (instr_op == `OP_SPECIAL  && instr_tail == `TAIL_MOVN);
 	wire instr_MOVZ  = (instr_op == `OP_SPECIAL  && instr_tail == `TAIL_MOVZ);
-	wire MDU_instr   = (instr_DIV || instr_DIVU || instr_MUL || instr_MULT || instr_MULTU || instr_MFHI || instr_MFLO || instr_MTHI || instr_MTLO);
+	/* Shift */
+	wire instr_SLL   = (instr_op == `OP_SPECIAL  && instr_tail == `TAIL_SLL);
+	wire instr_SLLV  = (instr_op == `OP_SPECIAL  && instr_tail == `TAIL_SLLV);
+	wire instr_SRL   = (instr_op == `OP_SPECIAL  && instr_tail == `TAIL_SRL);
+	wire instr_SRLV  = (instr_op == `OP_SPECIAL  && instr_tail == `TAIL_SRLV);
+	wire instr_SRA   = (instr_op == `OP_SPECIAL  && instr_tail == `TAIL_SRA);
+	wire instr_SRAV  = (instr_op == `OP_SPECIAL  && instr_tail == `TAIL_SRAV);
+	
+	
 	/*jump and link*/
 	wire instr_BGEZAL = (instr_op == `OP_REGIMM && instr_rt == `RT_BGEZAL);
 	wire instr_BLTZAL = (instr_op == `OP_REGIMM && instr_rt == `RT_BLTZAL);
@@ -83,9 +91,18 @@ module ID(
 	wire instr_SB   = (instr_op == `OP_SB);
 	wire instr_SH   = (instr_op == `OP_SH);
 	wire instr_SW   = (instr_op == `OP_SW);
+	
+	/* cp0*/
+	wire instr_MTC0 = (instr_op  == `OP_COP0 || instr_rs == `RS_MT);
+	wire instr_MFC0 = (instr_op  == `OP_COP0 || instr_rs == `RS_MF);
+	/* instruction type */
+	wire LOAD_instr = (instr_LB || instr_LBU || instr_LH || instr_LHU || instr_LW);
 	wire DM_instr   = (instr_LB || instr_LBU || instr_LH || instr_LHU || instr_SB || instr_SH || instr_LH || instr_LW || instr_SW );
-	
-	
+	wire MDU_instr   = (instr_DIV || instr_DIVU || instr_MUL || instr_MULT || instr_MULTU || instr_MFHI || instr_MFLO || instr_MTHI || instr_MTLO);
+	wire I_Arithmetic_instr = (id_instr[31:29] == 3'b001);
+	wire R_Arithmetic_instr = ((instr_op == `OP_SPECIAL && id_instr[5:3]==3'b100) || instr_SLT || instr_SLTU || instr_CLO  || instr_CLZ);
+	wire Shift_instr = (instr_SLL || instr_SLLV || instr_SRA || instr_SRAV || instr_SRL || instr_SRLV);
+	wire JumpLink_instr = (instr_JAL || instr_BGEZAL || instr_BLTZAL || instr_JALR);
 	
 	
 	assign id_pc_sel = ((id_bpu_pc!=id_br_addr) && ((id_instr[31:26]==6'd0 && id_instr[5:0]==6'd8) ||
@@ -111,15 +128,14 @@ module ID(
 	
 	assign id_dmen = DM_instr ? 1'b1 : 1'b0;
 	
-	assign id_regwr = ((id_instr[31:26]==6'd0 && (id_instr[5:3]==3'b100 || id_instr[5:1]==5'b10101 || id_instr[5:0]==6'd0
-								|| id_instr[5:0]==6'd4 || id_instr[5:1]==5'b00001 || id_instr[5:1]==5'b00011)) ||
-							(id_instr[31:26]==6'b011100 && id_instr[5:1]==5'b10000) ||
-							id_instr[31:26]==6'b100011 ||
-							(id_instr[31:26]==6'b010000 && id_instr[25:21]==5'd0) ||
-							(id_instr[31:29]==3'b001)||
-							(instr_MOVZ && id_compare[3])||
-							(instr_MOVN && !id_compare[3]) ||
-							instr_JAL) ? 1'b1 : 1'b0;
+	assign id_regwr = ( R_Arithmetic_instr||
+						Shift_instr ||
+						I_Arithmetic_instr||
+						LOAD_instr ||
+						instr_MFC0 || instr_MFHI || instr_MFLO ||
+						(instr_MOVZ && id_compare[3]) ||
+						(instr_MOVN && !id_compare[3]) ||
+						JumpLink_instr) ? 1'b1 : 1'b0;
 	
 	assign id_memtoreg = id_instr[31:26]==6'b100011 ? 1'b1 : 1'b0;
 	
@@ -132,8 +148,8 @@ module ID(
 										id_instr[31:26]==6'b101011) ? 3'd1 :
 										(id_instr[31:26]==6'b010000 && id_instr[25:21]==5'd0) ? 3'd2 :
 										(instr_MOVN || instr_MOVZ) ? 3'd3 :
-										(MDU_instr) ? 3'd4 : 
-										(instr_BGEZAL || instr_BLTZAL || instr_JAL || instr_JALR) ? 3'd5 : 3'd0;
+										MDU_instr ? 3'd4 : 
+										JumpLink_instr ? 3'd5 : 3'd0;
 	
 	assign id_alu_b_sel = (id_instr[31:29]==3'd1 || id_instr[31:26]==6'b100011 || id_instr[31:26]==6'b101011) ? 1'b1 : 1'b0;
 	
