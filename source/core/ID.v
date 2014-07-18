@@ -75,8 +75,6 @@ module ID(
 	wire instr_SRLV  = (instr_op == `OP_SPECIAL  && instr_tail == `TAIL_SRLV);
 	wire instr_SRA   = (instr_op == `OP_SPECIAL  && instr_tail == `TAIL_SRA);
 	wire instr_SRAV  = (instr_op == `OP_SPECIAL  && instr_tail == `TAIL_SRAV);
-	
-	
 	/*jump and link*/
 	wire instr_BGEZAL = (instr_op == `OP_REGIMM && instr_rt == `RT_BGEZAL);
 	wire instr_BLTZAL = (instr_op == `OP_REGIMM && instr_rt == `RT_BLTZAL);
@@ -95,6 +93,8 @@ module ID(
 	/* cp0*/
 	wire instr_MTC0 = (instr_op  == `OP_COP0 || instr_rs == `RS_MT);
 	wire instr_MFC0 = (instr_op  == `OP_COP0 || instr_rs == `RS_MF);
+	wire instr_ERET = (instr_op  == `OP_COP0 || instr_tail == `TAIL_ERET);
+	wire instr_SYSCALL = (instr_op  == `OP_SPECIAL || instr_tail == `TAIL_SYSCALL);
 	/* instruction type */
 	wire LOAD_instr = (instr_LB || instr_LBU || instr_LH || instr_LHU || instr_LW);
 	wire DM_instr   = (instr_LB || instr_LBU || instr_LH || instr_LHU || instr_SB || instr_SH || instr_LH || instr_LW || instr_SW );
@@ -123,8 +123,8 @@ module ID(
 									(id_instr[31:26]==6'd6 && (id_compare[2] || id_compare[1])) ||
 									(id_instr[31:26]==6'd7 && (!id_compare[2] && !id_compare[1])))) ? 1'b1 : 1'b0;
 	
-	assign selpc = (cu_intr==1'b1 || (status_out[1]==1'b1 && id_instr[31:26]==6'd0 && id_instr[5:0]==6'b001100)) ? 2'b10 :
-						((id_instr[31:26]==6'b010000 && id_instr[5:0]==6'b011000) ? 2'b01 : 2'b00);
+	assign selpc = (cu_intr==1'b1 || (status_out[1]==1'b1 && instr_SYSCALL)) ? 2'b10 :
+						instr_ERET ? 2'b01 : 2'b00;
 	
 	assign id_dmen = DM_instr ? 1'b1 : 1'b0;
 	
@@ -186,10 +186,9 @@ module ID(
 	assign id_cp0_out_sel = (id_instr[31:26]==6'b010000 && id_instr[25:21]==5'd0) ? (id_instr[15:11]==6'd13 && id_instr[2:0]==3'd0 ? 2'b01 :
 										(id_instr[15:11]==6'd14 && id_instr[2:0]==3'd0 ? 2'b10 : 2'b00)) : 2'b00;
 
-	assign id_cp0_in_sel = (cu_intr==1'b1 || (status_out[1]==1'b1 && id_instr[31:26]==6'd0 && id_instr[5:0]==6'b001100) ||
-									(id_instr[31:26]==6'b010000 && id_instr[5:0]==6'b011000)) ? 1'b1 : 1'b0;
+	assign id_cp0_in_sel = (cu_intr==1'b1 || (status_out[1]==1'b1 && instr_SYSCALL) || instr_ERET) ? 1'b1 : 1'b0;
 	
-	assign status_shift_sel = (id_instr[31:26]==6'b010000 && id_instr[5:0]==6'b011000) ? 1'b1 : 1'b0;
+	assign status_shift_sel = instr_ERET ? 1'b1 : 1'b0;
 	
 	assign epc_sel = (cu_intr==1'b1 && id_bpu_pc!=id_br_addr && ((id_instr[31:26]==6'd0 && id_instr[5:0]==6'd8) ||
 								(id_instr[31:26]==6'd1 && id_instr[20:17]==4'd0) || id_instr[31:26]==6'd2 || id_instr[31:28]==4'd1)) ? 1'b1 : 1'b0;
@@ -215,6 +214,6 @@ module ID(
 						instr_MTLO  ? 4'd9 : 4'd0;
 	assign mem_extsigned_o = (instr_LB || instr_LH) ? 1'b1 : 1'b0;
 	assign mem_bytesel_o = (instr_LW || instr_SW) 	? 4'b1111 :
-						   (instr_LB || instr_LBU || instr_SB) 	? 4'b0001 : 
-						   (instr_LH || instr_LHU || instr_SH)	? 4'b0011 : 4'b0;
+						   (instr_LH || instr_LHU || instr_SH)	? 4'b0011 : 
+						   (instr_LB || instr_LBU || instr_SB) 	? 4'b0001 : 4'b0;
 endmodule

@@ -1,133 +1,317 @@
 module MMU(
 	clk_i,
 	rst_i,
+	ivirtual_addr_i,
+	dvirtual_addr_i,
+	dphy_addr_o,
+	iphy_addr_o,
+	data_o,
+	data_wr_o,
+	data_bytesel_o,
+	//TLB instructions 
 	instr_tlbp_i,
 	instr_tlbr_i,
 	instr_tlbwr_i,
 	instr_tlbwi_i,
+	//CP0 registers data input
 	cp0_entryhi_i,
 	cp0_entrylo0_i,
 	cp0_entrylo1_i,
 	cp0_random_i,
-	cp0_wired_i,
 	cp0_status_i,
-	ivirtual_addr_i,
-	dvirtual_addr_i,
-	dmem_data_i,
-	dmem_en_i,
-	dmem_wr_i,
+	cp0_index_i,
+	cp0_config_i,
+	tlb_entryhi_match_index_o,
+	tlb_entryhi_hit_o,
+	//connected with BUS	
+	ibus_memory_en_o,
+	ibus_memory_data_ready_i,
+	ibus_memory_data_i,
+	dbus_memory_en_o,
+	dbus_memory_data_ready_i,
+	dbus_memory_data_i,
+	dbus_peripheral_en_o,
+	dbus_peripheral_data_ready_i,
+	dbus_peripheral_data_i,
+	//connected with CACHE
+	icache_en_o,
+	dcache_en_o,
+	icache_data_ready_i,
+	ichache_data_i,
+	dcache_data_ready_i,
+	dchache_data_i,
+	//connected with CPU core
+	dm_en_i,
+	dm_data_i,
+	dm_wr_i,
+	dm_bytesel_i,
+	dm_extsigned_i,
+	dm_data_o,
+	instruction_o, 
+	cpu_pause_o, //**
 	exception_addr_error_o,
 	exception_tlb_refill_o,
 	exception_tlb_mod_o,
 	exception_tlb_invalid_o,
-	exception_by_instr
+	exception_by_instr_o, //**
+	tlb_entryhi_o,
+	tlb_entrylo0_o,
+	tlb_entrylo1_o
 );
-
-
-endmodule
-
-
-
-module TLB(
-	clk_i,
-	ivirtual_addr_i,
-	tlb_wr_i,
-	tlb_entryhi_i,
-	tlb_entrylo0_i,
-	tlb_entrylo1_i,
-	tlb_index_i,
-	dvirtual_addr_i,
-	itlb_hit_o,
-	iphy_addr_o,
-	itlb_opts_o,
-	dtlb_hit_o,
-	dphy_addr_o,
-	dtlb_opts_o
-);
-input clk_i;
+input clk_i,rst_i;
+output [31:0] data_o;
+output [3:0] data_bytesel_o;
+output data_wr_o;
+//TLB instructions
+input instr_tlbp_i,instr_tlbr_i,instr_tlbwr_i,instr_tlbwi_i;
+//CP0
+input [31:0] cp0_entryhi_i,cp0_entrylo0_i,cp0_entrylo1_i,cp0_random_i,cp0_status_i,cp0_index_i,cp0_config_i;
+output [3:0]tlb_entryhi_match_index_o;
+output tlb_entryhi_hit_o;
+//ADDR
 input [31:0] ivirtual_addr_i,dvirtual_addr_i;
-input tlb_wr_i;
-input [31:0] tlb_entryhi_i,tlb_entrylo0_i,tlb_entrylo1_i;
-input [3:0] tlb_index_i;
-output itlb_hit_o,dtlb_hit_o;
-output [4:0] itlb_opts_o,dtlb_opts_o;
-output [31:0] iphy_addr_o,dphy_addr_o;
+output [31:0] dphy_addr_o,iphy_addr_o;
+//BUS
+input ibus_memory_data_ready_i,dbus_memory_data_ready_i,dbus_peripheral_data_ready_i;
+input [31:0] ibus_memory_data_i,dbus_memory_data_i,dbus_peripheral_data_i;
+output	ibus_memory_en_o,dbus_memory_en_o,dbus_peripheral_en_o;
+//CACHE
+input  icache_data_ready_i,dcache_data_ready_i;
+output icache_en_o,dcache_en_o;
+input [31:0] dchache_data_i,ichache_data_i;
+//CPU
+input dm_en_i,dm_wr_i,dm_extsigned_i;
+input [3:0] dm_bytesel_i;
+input [31:0] dm_data_i;
+output [31:0] dm_data_o;
+output 	exception_addr_error_o,exception_tlb_refill_o,exception_tlb_mod_o,exception_tlb_invalid_o,exception_by_instr_o;
+output [31:0] tlb_entryhi_o,tlb_entrylo0_o,tlb_entrylo1_o;
+output [31:0] instruction_o;
+output cpu_pause_o;
 
 
-wire [7:0]asid = tlb_entryhi_i[7:0];
-reg [18:0] tlb_vpn2[15:0];
-reg  tlb_g[15:0];
-reg [7:0]tlb_asid[15:0];
-reg [19:0] tlb_entrylo0_pfn[15:0];
-reg [4:0] tlb_entrylo0_opts[15:0];
-reg [4:0] tlb_entrylo1_opts[15:0];
-reg [19:0] tlb_entrylo1_pfn[15:0];
+wire [3:0]cp0_random_random = cp0_random_i[3:0];
+wire [3:0]cp0_index_index = cp0_index_i[3:0];
+wire [2:0] cp0_config_k0 = cp0_config_i[2:0];
+wire cp0_status_exl = cp0_status_i[1];
+wire cp0_status_erl = cp0_status_i[2];
+wire cp0_status_um = cp0_status_i[4];
+
+//connected with JTLB
+wire itlb_hit,dtlb_hit;
+reg [31:0] iphy_addr,dphy_addr;
+wire [4:0] itlb_opts,dtlb_opts;
+wire [2:0] itlb_entry_c;
+wire itlb_entry_d,itlb_entry_v;
+wire [2:0] dtlb_entry_c;
+wire dtlb_entry_d,dtlb_entry_v;
+// wire tlb_instrs = (instr_tlbp_i || instr_tlbr_i || instr_tlbwi_i || instr_tlbwr_i);
+wire [31:0] dtlb_phy_addr,itlb_phy_addr;
+
+
+wire cpu_user_mode = !cp0_status_erl && !cp0_status_exl && cp0_status_um;
+// wire cpu_kernel_mode = !cpu_user_mode;
 
 
 
-always@(posedge clk_i)
+reg iexception_tlb_refill,iexception_addr_error,iexception_tlb_invalid;
+reg icache_en,dcache_en,ibus_memory_en,dbus_memory_en,dbus_peripheral_en;
+//instruction 
+always@(*)
 begin
-	if(tlb_wr_i)
+	icache_en = 0;
+	ibus_memory_en = 0;
+	iexception_addr_error = 0;
+	iexception_tlb_invalid = 0;
+	iexception_tlb_refill = 0;
+	
+	if(cpu_user_mode && ivirtual_addr_i[31])
+		iexception_addr_error = 1'b1;
+	//kseg0
+	case(ivirtual_addr_i[31:29])
+		3'b100: //kseg0
+			begin
+				iphy_addr = {3'b000,ivirtual_addr_i[28:0]};
+				if(cp0_config_k0 == 3'd2 || cp0_config_k0 == 3'd7)
+					ibus_memory_en = 1'b1;
+				else
+					icache_en = 1'b1;
+	
+			end
+		3'b101: //kseg1
+			begin
+				iphy_addr = {3'b000,ivirtual_addr_i[28:0]};
+				
+			end
+		default:
+			begin
+				if(cp0_status_erl && !ivirtual_addr_i[31])
+						iphy_addr = ivirtual_addr_i;
+				else
+					begin
+						iphy_addr = itlb_phy_addr;
+						if(!itlb_hit)
+							iexception_tlb_refill = 1'b1;
+						else
+							if(!itlb_entry_v)
+								iexception_tlb_invalid = 1'b1;
+							else
+								if(itlb_entry_c == 3'd2 || itlb_entry_c == 3'd7)
+									ibus_memory_en = 1'b1;
+								else
+									icache_en = 1'b1;
+					end
+			end
+	endcase
+			
+end
+
+//data
+reg dexception_addr_error,dexception_tlb_invalid,dexception_tlb_refill,dexception_tlb_mod;
+always@(*)
+begin
+	dcache_en = 0;
+	dbus_memory_en = 0;
+	dbus_peripheral_en = 0;
+	dexception_addr_error = 0;
+	dexception_tlb_invalid = 0;
+	dexception_tlb_refill = 0;
+	dexception_tlb_mod = 0;
+	dphy_addr =0;
+	if(dm_en_i)
 		begin
-			tlb_vpn2[tlb_index_i] <= tlb_entryhi_i[31:13];
-			tlb_asid[tlb_index_i] <=asid;
-			tlb_entrylo0_pfn[tlb_index_i] <= tlb_entrylo0_i[25:6];
-			tlb_entrylo0_opts[tlb_index_i] <= tlb_entrylo0_i[5:1];
-			tlb_entrylo1_pfn[tlb_index_i] <= tlb_entrylo1_i[25:6];
-			tlb_entrylo1_opts[tlb_index_i] <= tlb_entrylo1_i[5:1];
-			tlb_g[tlb_index_i] <= tlb_entrylo0_i[0] & tlb_entrylo1_i[0];
+			if(cpu_user_mode && ivirtual_addr_i[31])
+				dexception_addr_error = 1'b1;
+			
+			//kseg0
+			case(dvirtual_addr_i[31:29])
+				3'b100: //kseg0
+					begin
+						dphy_addr = {3'b000,dvirtual_addr_i[28:0]};
+						if(cp0_config_k0 == 3'd2 || cp0_config_k0 == 3'd7)
+							dbus_memory_en = 1'b1;
+						else
+							dcache_en = 1'b1;
+			
+					end
+				3'b101: //kseg1
+					begin
+						dphy_addr = {3'b000,dvirtual_addr_i[28:0]};
+						dbus_peripheral_en = 1'b1;
+					end
+				default:
+					begin
+						if(cp0_status_erl && !dvirtual_addr_i[31])
+								dphy_addr = dvirtual_addr_i;
+						else
+							begin
+								dphy_addr = dtlb_phy_addr;
+								if(!dtlb_hit)
+									dexception_tlb_refill = 1'b1;
+								else
+									if(!dtlb_entry_v)
+										dexception_tlb_invalid = 1'b1;
+									else
+										if(!dtlb_entry_d && dm_wr_i)  
+											dexception_tlb_mod = 1'b1;
+										else
+											if(dtlb_entry_c == 3'd2 || dtlb_entry_c == 3'd7)
+												dbus_memory_en = 1'b1;
+											else
+												dcache_en = 1'b1;
+							end
+					end
+			endcase
 		end
+			
 end
 
-
-reg itlb_match;
-reg [4:0]itlb_match_index;
-reg [18:0] tlb_vpn2[15:0];
+reg [31:0] dm_data;
+reg [31:0] instruction;
 always@(*)
 begin
-	itlb_match = 1'b0;
-	itlb_match_index = 4'dx;
-	begin:loop1
-			integer i;
-			for (i=0;i<16;i=i+1)
+	instruction = 0;
+	dm_data = 0;
+	//instruction
+	if(icache_en)
+		instruction = ichache_data_i;
+	else
+		if(ibus_memory_en)
+			instruction = ibus_memory_data_i;
+			
+	//data
+	if(dcache_en)
+		dm_data = dchache_data_i;
+	else 	
+		if(dbus_memory_en)
+			dm_data = dbus_memory_data_i;
+		else
+			if(dbus_peripheral_en)
+				dm_data = dbus_peripheral_data_i;
+	
+	case(dm_bytesel_i)
+		4'b0001:
+			if(dm_extsigned_i)
+				dm_data = {24'b0,dm_data[7:0]};
+			
+		4'b0011:
+			if(dm_extsigned_i)
+				dm_data = {16'b0,dm_data[15:0]};
+		default:
 			begin
-				if (tlb_vpn2[i] == ivirtual_addr_i[31:13]) //匹配地址高位
-				begin
-					itlb_match= 1; 
-					itlb_match_index = i[3:0];  //找到匹配的地址
-					disable loop1;				//退出循环
-				end
 			end
-	end
+	endcase
 end
-wire itlb_hit = ((itlb_match && tlb_g[itlb_match_index]) || (itlb_match && !tlb_g[itlb_match_index] && tlb_asid[itlb_match_index] == asid)) ? 1'b1 : 1'b0;
-assign itlb_hit_o = itlb_hit;
-assign iphy_addr_o = itlb_hit ? (ivirtual_addr_i[12] ? {tlb_entrylo1_pfn[itlb_match_index],ivirtual_addr_i[11:0]} : {tlb_entrylo0_pfn[itlb_match_index],ivirtual_addr_i[11:0]}) : 32'b0;
-assign itlb_opts_o = itlb_hit ? (ivirtual_addr_i[12] ? tlb_entrylo1_opts[itlb_match_index] : tlb_entrylo0_opts[itlb_match_index]) : 5'b0;
-
-reg dtlb_match;
-reg [4:0]dtlb_match_index;
-always@(*)
-begin
-	dtlb_match = 1'b0;
-	dtlb_match_index = 4'dx;
-	begin:loop2
-			integer i;
-			for (i=0;i<16;i=i+1)
-			begin
-				if (tlb_vpn2[i] == dvirtual_addr_i[31:13])
-				begin
-					dtlb_match= 1;
-					dtlb_match_index = i[3:0];
-					disable loop2;
-				end
-			end
-	end
-end
-wire dtlb_hit = ((dtlb_match && tlb_g[dtlb_match_index]) || (dtlb_match && !tlb_g[dtlb_match_index] && tlb_asid[dtlb_match_index] == asid)) ? 1'b1 : 1'b0;
-assign dtlb_hit_o = dtlb_hit;
-assign dphy_addr_o = dtlb_hit ? (dvirtual_addr_i[12] ? {tlb_entrylo1_pfn[dtlb_match_index],dvirtual_addr_i[11:0]} : {tlb_entrylo0_pfn[dtlb_match_index],dvirtual_addr_i[11:0]}) : 32'b0;
-assign dtlb_opts_o = dtlb_hit ? (dvirtual_addr_i[12] ? tlb_entrylo1_opts[dtlb_match_index] : tlb_entrylo0_opts[dtlb_match_index]) : 5'b0;
 
 
+
+
+wire tlb_wr = (instr_tlbwi_i || instr_tlbwr_i) ? 1'b1 : 1'b0;
+wire [3:0] tlb_index  = (instr_tlbr_i || instr_tlbwi_i) ? cp0_index_index : cp0_random_random;
+JTLB jtlb_entry(
+	.clk_i(clk_i),
+	.ivirtual_addr_i(ivirtual_addr_i),
+	.tlb_wr_i(tlb_wr),
+	.tlb_entryhi_i(cp0_entryhi_i),
+	.tlb_entrylo0_i(cp0_entrylo0_i),
+	.tlb_entrylo1_i(cp0_entrylo1_i),
+	.tlb_index_i(tlb_index),
+	.dvirtual_addr_i(dvirtual_addr_i),
+	.tlb_index_o(tlb_entryhi_match_index_o),
+	.tlb_entryhi_hit_o(tlb_entryhi_hit_o),
+	.itlb_hit_o(itlb_hit),
+	.iphy_addr_o(itlb_phy_addr),
+	.itlb_opts_o({itlb_entry_c,itlb_entry_d,itlb_entry_v}),
+	.dtlb_hit_o(dtlb_hit),
+	.dphy_addr_o(dtlb_phy_addr),
+	.dtlb_opts_o({dtlb_entry_c,dtlb_entry_d,dtlb_entry_v}),
+	.tlb_entryhi_o(tlb_entryhi_o),
+	.tlb_entrylo0_o(tlb_entrylo0_o),
+	.tlb_entrylo1_o(tlb_entrylo1_o)
+);
+assign data_wr_o = dm_wr_i;
+assign data_o = dm_data_i;
+assign data_bytesel_o = dm_bytesel_i;
+//address
+assign iphy_addr_o = iphy_addr;
+assign dphy_addr_o = dphy_addr;
+//cache
+assign icache_en_o = icache_en;
+assign dcache_en_o = dcache_en;
+//bus
+assign ibus_memory_en_o = ibus_memory_en;
+assign dbus_memory_en_o = dbus_memory_en;
+assign dbus_peripheral_en_o = dbus_peripheral_en;
+
+
+//exception
+assign exception_addr_error_o = iexception_addr_error & dexception_addr_error;
+assign exception_tlb_invalid_o = iexception_tlb_invalid & dexception_tlb_invalid;
+assign exception_tlb_mod_o = dexception_tlb_mod;
+assign exception_tlb_refill_o = iexception_tlb_refill & dexception_tlb_refill;
+//cpu
+assign instruction_o = instruction;
+assign dm_data_o = dm_data;
+assign cpu_pause_o = ~(icache_data_ready_i || ibus_memory_data_ready_i) || 
+					   ~((dm_en_i && (dcache_data_ready_i || dbus_memory_data_ready_i || dbus_peripheral_data_ready_i)) || !dm_en_i);
 endmodule
