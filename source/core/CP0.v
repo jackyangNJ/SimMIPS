@@ -1,3 +1,4 @@
+`include "CPUConstants.v"
 module CP0(
 	clk,
 	reset,
@@ -33,16 +34,28 @@ module CP0(
 	cp0_status_i,
 	cp0_epc_i,
 	cp0_epc_wen_i,
-	cp0_eentryhi_i,
+	cp0_entryhi_i,
 	cp0_entryhi_wen_i.
 	cp0_entrylo0_i,
 	cp0_entrylo0_wen_i,
 	cp0_entrylo1_i,
 	cp0_entrylo1_wen_i,
 	
-	pause
+	exception_addr_error_i,
+	exception_tlb_refill_i,
+	exception_tlb_mod_i,
+	exception_tlb_invalid_i,
+	hw_interrupt0_i,
+	hw_interrupt1_i,
+	hw_interrupt2_i,
+	hw_interrupt3_i,
+	hw_interrupt4_i,
+	hw_interrupt5_i,
+	
+	cpu_pause_i,
+	instruction_i,
 );
-input clk,reset,pause;
+input clk,reset,cpu_pause_i;
 //normal cp0 registers r/w
 input cp0_wen_i;
 input [4:0]cp0_addr_i;
@@ -51,64 +64,149 @@ output [31:0] cp0_data_o;
 //cp0 register input
 input cp0_status_wen_i,cp0_epc_wen_i,cp0_entryhi_wen_i,cp0_entrylo0_wen_i,cp0_entrylo1_wen_i;
 input [31:0] cp0_status_i
-	reg [31:0]status;
-	reg [31:0]cause;
-	reg [31:0]epc;
-	//CP0 Index
-	// reg cp0_index_p;
-	// reg [3:0] cp0_index_index;
+
+/* Constants */
+	/* instruction types */
+	wire [5:0] instr_op = instruction_i[31:26];
+	wire [5:0] instr_tail = instruction_i[5:0];
+	wire [4:0] instr_rs = instruction_i[25:21];
+	wire [4:0] instr_rt = instruction_i[20:16];
+	wire instr_MTC0 = (instr_op  == `OP_COP0 || instr_rs == `RS_MT);
+	wire instr_MFC0 = (instr_op  == `OP_COP0 || instr_rs == `RS_MF);
+	wire instr_ERET = (instr_op  == `OP_COP0 || instr_tail == `TAIL_ERET);
+	wire instr_SYSCALL = (instr_op  == `OP_SPECIAL || instr_tail == `TAIL_SYSCALL);
+	
+	
+/* CP0 Registers */
+	// reg [31:0]status;
+	// reg [31:0]cause;
+	// reg [31:0]epc;
+	reg [31:0] cp0_epc;
+	// CP0 Index
+	reg cp0_index_p;
+	reg [3:0] cp0_index_index;
 	// CP0 Random
-	// reg [3:0] cp0_random;
+	reg [3:0] cp0_random;
 	// cp0 Wired
-	// reg [3:0] cp0_wired;
-	// CP0  EntryLo0,EntryLo1
-	// reg [19:0] cp0_entrylo0_pfn;
-	// reg [2:0] cp0_entrylo0_c;
-	// reg cp0_entrylo0_d;
-	// reg cp0_entrylo0_v;
-	// reg cp0_entrylo0_g;
-	// reg [19:0] cp0_entrylo1_pfn;
-	// reg [2:0] cp0_entrylo1_c;
-	// reg cp0_entrylo1_d;
-	// reg cp0_entrylo1_v;
-	// reg cp0_entrylo1_g;
-	//CP0 status
+	reg [3:0] cp0_wired;
+	// CP0  EntryLo0,EntryLo1,Entryhi
+	reg [25:0]cp0_entrylo0;
+	reg [25:0]cp0_entrylo1;
+	reg [18:0] cp0_entryhi_vpn2;
+	reg [7:0] cp0_entryhi_asid;
+	//CP0 Status
+	reg cp0_status_ie,cp0_status_exl,cp0_status_erl,cp0_status_um;
+	reg [5:0] cp0_status_im;
+	//CP0 Cause
+	reg [5:0] cp0_cause_ip;
+	reg [4:0] cp0_cause_exc_code;
 	
 	
 	
-	//CP0 Index
-	// always@(posedge clk)
-	// begin
-		// if(!pause)
-			// begin
-				// if(tlb_probe_faled)
-					// cp0_index_p <= 1'b1;
-				// else
-					// cp0_index_p <= 1'b0;
-				// if(cp0_wen[`CP0_INDEX_NUM] && (id_cp0_in_sel ==`CP0_INDEX_NUM))
-						// cp0_index_index <= cp0_data_i[3:0];
-			// end
-	// end
-	// CP0 Random
-	// always@(posedge clk)
-	// begin
-		// if(reset)
-			// cp0_random <= 4'd15;
-		// else
-			// begin
-				// if(cp0_random == 4'd15)
-					// cp0_random <= cp0_wired;
-				// else
-					// cp0_random <= cp0_random + 1'b1;
-			// end
-	// end
+	/* CP0 Index */
+	always@(posedge clk)
+	begin
+		if(!cpu_pause_i)
+			begin
+				if(tlb_probe_faled)
+					cp0_index_p <= 1'b1;
+				else
+					cp0_index_p <= 1'b0;
+				if(cp0_wen_i && cp0_addr_i ==`CP0_INDEX_NUM)
+						cp0_index_index <= cp0_data_i[3:0];
+			end
+	end
+	/* CP0 Random */
+	always@(posedge clk)
+	begin
+		if(reset)
+			cp0_random <= 4'd15;
+		else
+			begin
+				if(cp0_random == 4'd15)
+					cp0_random <= cp0_wired;
+				else
+					cp0_random <= cp0_random + 1'b1;
+			end
+	end
 	
-	//CP0 Wired
-	// always@(posedge clk)
-	// begin
-		// if(cp0_wen[`CP0_WIRED_NUM] && (id_cp0_in_sel ==`CP0_WIRED_NUM) && !pause)
-			// cp0_wired <= cp0_data_i[3:0];
-	// end
+	// CP0 Wired
+	always@(posedge clk)
+	begin
+		if(reset)
+			cp0_wired <= 0;
+		else
+			if(!cpu_pause_i)
+				begin
+					if(cp0_wen_i && cp0_addr_i == `CP0_WIRED_NUM)
+						cp0_wired <= cp0_data_i[3:0];
+				end
+	end
+
+	//CP0 Entryhi,Entrylo0 and EntryLo1
+	always @ (posedge clk) 
+	begin
+		if(!cpu_pause_i)
+			begin
+				//entrylo0
+				if(cp0_wen_i && cp0_addr_i == `CP0_ENTRYLO0_ADDR)
+					cp0_entrylo0 <= cp0_data_i[25:0];
+				else
+					if(cp0_entrylo0_wen_i)
+						cp0_entrylo0 <= cp0_entrylo0_i[25:0];
+				//entrylo1		
+				if(cp0_wen_i && cp0_addr_i == `CP0_ENTRYLO1_ADDR)
+					cp0_entrylo1 <= cp0_data_i[25:0];
+				else
+					if(cp0_entrylo1_wen_i)
+						cp0_entrylo1 <= cp0_entrylo0_i[25:0];
+				//entryhi
+				if(cp0_wen_i && cp0_addr_i == `CP0_ENTRYHI_ADDR)
+					{cp0_entryhi_vpn2,cp0_entryhi_asid} <= {cp0_data_i[31:13],cp0_data_i[7:0]};
+				else
+					if(cp0_entryhi_wen_i)
+						{cp0_entryhi_vpn2,cp0_entryhi_asid} <= {cp0_entryhi_i[31:13],cp0_entryhi_i[7:0]};	
+			end
+	end
+	
+	//CP0 Status
+	always @ (posedge clk) 
+	begin
+		if(!cpu_pause_i)
+			begin
+				if(cp0_wen_i && cp0_addr_i == `CP0_STATUS_ADDR)
+					{cp0_status_im,cp0_status_um,cp0_status_erl,cp0_status_exl,cp0_status_ie} <=
+										{cp0_data_i[15:10],cp0_data_i[4],cp0_data_i[2:0]};
+				else
+					//TODO
+			end
+	end
+	
+	//CP0 Cause
+	always @ (posedge clk) 
+	begin
+		if(!cpu_pause_i)
+			begin
+				if(cp0_wen_i && cp0_addr_i == `CP0_CAUSE_ADDR)
+					{cp0_cause_ip,cp0_cause_exc_code} <= {cp0_data_i[15:10],cp0_data_i[6:2]};
+				else
+					//TODO
+
+			end
+	end
+	
+	//CP0 EPC
+	always @ (posedge clk) 
+	begin
+		if(!cpu_pause_i)
+			begin
+				if(cp0_wen_i && (cp0_addr_i == `CP0_EPC_ADDR))
+					cp0_epc <= cp0_data_i;
+				else
+					//TODO
+			end
+	end
+
 	
 	always @ (posedge clk) begin
 		if (reset) begin
@@ -117,20 +215,6 @@ input [31:0] cp0_status_i
 			status = 32'd0;
 		end
 		else begin
-			if(cp0_wen_i)
-				begin
-					case(cp0_addr_i)
-						5'd0:
-							begin
-							end
-						5'd1:
-							begin
-							end
-						default:
-							begin
-							end
-					endcase
-				end
 			if (cp0_wen[0] == 1'b1 && pause == 1'b0) begin
 				if (id_cp0_in_sel)
 					epc = epc_in;
@@ -153,19 +237,39 @@ input [31:0] cp0_status_i
 			end
 		end
 	end
-
-	/*
-	 * cpo0 out sel
-	 */
-	 // always@(*)
-	 // begin
-		// case(id_cp0_in_sel)
-			// `CP0_INDEX_NUM:
-				// id_cp0_out
-		// endcase
-	 // end
-	assign id_cp0_out = (id_cp0_out_sel==2'd2) ? epc : ((id_cp0_out_sel==2'd1) ? cause : status);
-	assign status_out = status;
-	assign epc_out = epc;
+	
+	//CP0 read
+	reg [31:0] cp0_data_output;
+	always@(*)
+	begin
+		case(cp0_addr_i)
+			`CP0_INDEX_ADDR:
+				cp0_data_output = {cp0_index_p,27'b0,cp0_index_index};
+			`CP0_ENTRYLO0_ADDR:
+				cp0_data_output = {6'b0,cp0_entrylo0};
+			`CP0_ENTRYLO1_ADDR:
+				cp0_data_output = {6'b0,cp0_entrylo1 };
+			`CP0_WIRED_ADDR:
+				cp0_data_output = {28'b0,cp0_wired};
+			`CP0_RANDOM_ADDR:
+				cp0_data_output = {28'b0,cp0_random};
+			`CP0_ENTRYHI_ADDR:
+				cp0_data_output = {cp0_entryhi_vpn2,5'b0,cp0_entryhi_asid};
+			`CP0_STATUS_ADDR:
+				cp0_data_output = {16'b0,cp0_status_im,5'b0,cp0_status_um,1'b0,cp0_status_erl,cp0_status_exl,cp0_status_ie};
+			`CP0_CAUSE_ADDR:
+				cp0_data_output = {16'b0,cp0_cause_ip,3'b0,cp0_cause_exc_code,2'b0};
+			`CP0_EPC_ADDR:
+				cp0_data_output = cp0_epc;
+			default:
+				cp0_data_output = 0;
+		endcase
+	end
+	assign cp0_data_o = cp0_data_output;
+	
+	
+	// assign id_cp0_out = (id_cp0_out_sel==2'd2) ? epc : ((id_cp0_out_sel==2'd1) ? cause : status);
+	// assign status_out = status;
+	// assign epc_out = epc;
 	
 endmodule

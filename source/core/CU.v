@@ -1,4 +1,4 @@
-`include "InstructionConstants.v"
+`include "CPUConstants.v"
 module CU(
 	input pause,
 	input intr,

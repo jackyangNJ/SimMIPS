@@ -196,12 +196,12 @@ module ID(
 	assign id_of_ctrl = ((id_instr[31:26]==6'h0 && (id_instr[5:0]==6'h20 || id_instr[5:0]==6'h2a || id_instr[5:0]==6'h22)) ||
 								id_instr[31:26]==6'ha || id_instr[31:26]==6'h8) ? 1'b1 : 1'b0;
 	
-	assign cp0_wen = (cu_intr==1'b1 || (status_out[1]==1'b1 && id_instr[31:26]==6'd0 && id_instr[5:0]==6'b001100)) ? 3'b111 :
+	assign cp0_wen = (cu_intr==1'b1 || (status_out[1]==1'b1 && instr_SYSCALL)) ? 3'b111 :
 							((id_instr[31:26]==6'b010000 && id_instr[5:0]==6'b011000) ? 3'b110 :
 							((id_instr[31:26]==6'b010000 && id_instr[25:21]==5'b00100) ? (id_instr[15:11]==5'd12 ? 3'b100 :
 							(id_instr[15:11]==5'd13 ? 3'b010 : (id_instr[15:11]==5'd14 ? 3'b001 : 3'b000))) : 3'b000));
 	
-	assign cause_in = cu_intr==1'b1 ? 32'd0 : ((status_out[1]==1'b1 && id_instr[31:26]==6'd0 && id_instr[5:0]==6'b001100) ? 32'd1 : 32'd0);
+	assign cause_in = cu_intr==1'b1 ? 32'd0 : ((status_out[1]==1'b1 && instr_SYSCALL) ? 32'd1 : 32'd0);
 	
 	assign mdu_op_o = 	instr_DIV   ? 4'd1 :
 						instr_DIVU  ? 4'd2 :
