@@ -55,6 +55,8 @@ module CP0(
 	
 	cpu_pause_i,
 	instruction_i,
+	
+	
 );
 input clk,reset,cpu_pause_i;
 //normal cp0 registers r/w
@@ -183,7 +185,13 @@ input [31:0] cp0_status_i
 					{cp0_status_im,cp0_status_um,cp0_status_exl,cp0_status_ie} <=
 										{cp0_data_i[15:10],cp0_data_i[4],cp0_data_i[1:0]};
 				else
-					//TODO
+					begin
+						if(exc_occur)
+							cp0_status_exl <= 1'b1;
+						else
+							if(instr_ERET)
+								cp0_status_exl <= 0;
+					end
 			end
 	end
 	
@@ -237,7 +245,7 @@ input [31:0] cp0_status_i
 				if(cp0_wen_i && (cp0_addr_i == `CP0_EPC_ADDR))
 					cp0_epc <= cp0_data_i;
 				else
-					if(exc_occur)
+					if(exc_occur && !cp0_status_exl)
 						cp0_epc <= cp0_epc_i;
 			end
 	end
