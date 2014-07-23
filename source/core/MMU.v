@@ -3,6 +3,7 @@ module MMU(
 	rst_i,
 	ivirtual_addr_i,
 	dvirtual_addr_i,
+	//connected with cache and bus
 	dphy_addr_o,
 	iphy_addr_o,
 	data_o,
@@ -53,7 +54,7 @@ module MMU(
 	exception_tlb_refill_o,
 	exception_tlb_mod_o,
 	exception_tlb_invalid_o,
-	exception_by_instr_o, //**
+	exception_tlb_rw_o, //**
 	tlb_entryhi_o,
 	tlb_entrylo0_o,
 	tlb_entrylo1_o
@@ -84,7 +85,7 @@ input dm_en_i,dm_wr_i,dm_extsigned_i;
 input [3:0] dm_bytesel_i;
 input [31:0] dm_data_i;
 output [31:0] dm_data_o;
-output 	exception_addr_error_o,exception_tlb_refill_o,exception_tlb_mod_o,exception_tlb_invalid_o,exception_by_instr_o;
+output 	exception_addr_error_o,exception_tlb_refill_o,exception_tlb_mod_o,exception_tlb_invalid_o,exception_tlb_rw_o;
 output [31:0] tlb_entryhi_o,tlb_entrylo0_o,tlb_entrylo1_o;
 output [31:0] instruction_o;
 output cpu_pause_o;
@@ -314,4 +315,7 @@ assign instruction_o = instruction;
 assign dm_data_o = dm_data;
 assign cpu_pause_o = ~(icache_data_ready_i || ibus_memory_data_ready_i) || 
 					   ~((dm_en_i && (dcache_data_ready_i || dbus_memory_data_ready_i || dbus_peripheral_data_ready_i)) || !dm_en_i);
+					   
+//TODO
+assign exception_tlb_rw_o = 1'b1;
 endmodule

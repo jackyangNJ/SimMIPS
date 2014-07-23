@@ -136,5 +136,4 @@ module CU(
 				cu_intr = 1'b0;
 		end
 	end
-
 endmodule

@@ -21,6 +21,15 @@
 `define CP0_ERRCTL_ADDR 5'd26
 `define CP0_TAGLO_ADDR 5'd28
 `define CP0_ERROREPC_ADDR 5'd30
+/* CP0 exceptions */
+`define EXC_Int 5'd0
+`define EXC_Mod 5'd1
+`define EXC_TLBL 5'd2
+`define EXC_TLBS 5'd3
+`define EXC_AdEL 5'd4
+`define EXC_AdES 5'd5
+`define EXC_Sys 5'd8
+`define EXC_Ov 5'd12
 
 //MDU
 `define MDU_OP_NOP		(4'd0)

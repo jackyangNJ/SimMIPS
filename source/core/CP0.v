@@ -45,6 +45,7 @@ module CP0(
 	exception_tlb_refill_i,
 	exception_tlb_mod_i,
 	exception_tlb_invalid_i,
+	exception_tlb_rw_i,
 	hw_interrupt0_i,
 	hw_interrupt1_i,
 	hw_interrupt2_i,
@@ -76,7 +77,11 @@ input [31:0] cp0_status_i
 	wire instr_ERET = (instr_op  == `OP_COP0 || instr_tail == `TAIL_ERET);
 	wire instr_SYSCALL = (instr_op  == `OP_SPECIAL || instr_tail == `TAIL_SYSCALL);
 	
-	
+	/* interrupts occur */
+	wire intr_occur = (hw_interrupt0_i || hw_interrupt1_i ||	hw_interrupt2_i || hw_interrupt3_i || hw_interrupt4_i || hw_interrupt5_i) && (!cp0_status_exl) && cp0_status_ie;
+	/* exception occur*/
+	wire exc_tlb_occur = exception_addr_error_i || exception_tlb_invalid_i || exception_tlb_mod_i || exception_tlb_refill_i;
+	wire exc_occur = intr_occur || instr_SYSCALL || exc_tlb_occur;
 /* CP0 Registers */
 	// reg [31:0]status;
 	// reg [31:0]cause;
@@ -95,7 +100,7 @@ input [31:0] cp0_status_i
 	reg [18:0] cp0_entryhi_vpn2;
 	reg [7:0] cp0_entryhi_asid;
 	//CP0 Status
-	reg cp0_status_ie,cp0_status_exl,cp0_status_erl,cp0_status_um;
+	reg cp0_status_ie,cp0_status_exl,cp0_status_um;
 	reg [5:0] cp0_status_im;
 	//CP0 Cause
 	reg [5:0] cp0_cause_ip;
@@ -175,8 +180,8 @@ input [31:0] cp0_status_i
 		if(!cpu_pause_i)
 			begin
 				if(cp0_wen_i && cp0_addr_i == `CP0_STATUS_ADDR)
-					{cp0_status_im,cp0_status_um,cp0_status_erl,cp0_status_exl,cp0_status_ie} <=
-										{cp0_data_i[15:10],cp0_data_i[4],cp0_data_i[2:0]};
+					{cp0_status_im,cp0_status_um,cp0_status_exl,cp0_status_ie} <=
+										{cp0_data_i[15:10],cp0_data_i[4],cp0_data_i[1:0]};
 				else
 					//TODO
 			end
@@ -190,8 +195,37 @@ input [31:0] cp0_status_i
 				if(cp0_wen_i && cp0_addr_i == `CP0_CAUSE_ADDR)
 					{cp0_cause_ip,cp0_cause_exc_code} <= {cp0_data_i[15:10],cp0_data_i[6:2]};
 				else
-					//TODO
-
+					begin
+						case({intr_occur,exception_addr_error_i,exception_tlb_mod_i,exception_tlb_refill_i,exception_tlb_invalid_i,instr_SYSCALL})
+							/* interrupts */
+							6'b1xxxxx:
+								begin
+									cp0_cause_ip[5] <= hw_interrupt5_i && cp0_status_im[5];
+									cp0_cause_ip[4] <= hw_interrupt4_i && cp0_status_im[4];
+									cp0_cause_ip[3] <= hw_interrupt3_i && cp0_status_im[3];
+									cp0_cause_ip[2] <= hw_interrupt2_i && cp0_status_im[2];
+									cp0_cause_ip[1] <= hw_interrupt1_i && cp0_status_im[1];
+									cp0_cause_ip[0] <= hw_interrupt0_i && cp0_status_im[0];
+								end										
+							6'b01xxxx:
+								if(exception_tlb_rw_i)
+									cp0_cause_exc_code <= `EXC_AdES;
+								else	
+									cp0_cause_exc_code <= `EXC_AdEL;
+							6'b001xxx:
+								if(exception_tlb_rw_i)
+									cp0_cause_exc_code <= `EXC_Mod;
+							6'b0001xx,6'b00001x:
+								if(exception_tlb_rw_i)
+									cp0_cause_exc_code <= `EXC_TLBS;
+								else
+									cp0_cause_exc_code <= `EXC_TLBL;
+							6'b000001:
+								cp0_cause_exc_code <= `EXC_Sys;
+							default:
+								cp0_cause_exc_code <= 0;
+						endcase
+					end
 			end
 	end
 	
@@ -203,7 +237,8 @@ input [31:0] cp0_status_i
 				if(cp0_wen_i && (cp0_addr_i == `CP0_EPC_ADDR))
 					cp0_epc <= cp0_data_i;
 				else
-					//TODO
+					if(exc_occur)
+						cp0_epc <= cp0_epc_i;
 			end
 	end
 
@@ -256,7 +291,7 @@ input [31:0] cp0_status_i
 			`CP0_ENTRYHI_ADDR:
 				cp0_data_output = {cp0_entryhi_vpn2,5'b0,cp0_entryhi_asid};
 			`CP0_STATUS_ADDR:
-				cp0_data_output = {16'b0,cp0_status_im,5'b0,cp0_status_um,1'b0,cp0_status_erl,cp0_status_exl,cp0_status_ie};
+				cp0_data_output = {16'b0,cp0_status_im,5'b0,cp0_status_um,2'b0,cp0_status_exl,cp0_status_ie};
 			`CP0_CAUSE_ADDR:
 				cp0_data_output = {16'b0,cp0_cause_ip,3'b0,cp0_cause_exc_code,2'b0};
 			`CP0_EPC_ADDR:
