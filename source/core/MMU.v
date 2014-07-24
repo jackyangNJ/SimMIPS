@@ -145,22 +145,17 @@ begin
 			end
 		default:
 			begin
-				if(cp0_status_erl && !ivirtual_addr_i[31])
-						iphy_addr = ivirtual_addr_i;
+				iphy_addr = itlb_phy_addr;
+				if(!itlb_hit)
+					iexception_tlb_refill = 1'b1;
 				else
-					begin
-						iphy_addr = itlb_phy_addr;
-						if(!itlb_hit)
-							iexception_tlb_refill = 1'b1;
+					if(!itlb_entry_v)
+						iexception_tlb_invalid = 1'b1;
+					else
+						if(itlb_entry_c == 3'd2 || itlb_entry_c == 3'd7)
+							ibus_memory_en = 1'b1;
 						else
-							if(!itlb_entry_v)
-								iexception_tlb_invalid = 1'b1;
-							else
-								if(itlb_entry_c == 3'd2 || itlb_entry_c == 3'd7)
-									ibus_memory_en = 1'b1;
-								else
-									icache_en = 1'b1;
-					end
+							icache_en = 1'b1;
 			end
 	endcase
 			
@@ -200,26 +195,21 @@ begin
 						dbus_peripheral_en = 1'b1;
 					end
 				default:
-					begin
-						if(cp0_status_erl && !dvirtual_addr_i[31])
-								dphy_addr = dvirtual_addr_i;
+					begin						
+						dphy_addr = dtlb_phy_addr;
+						if(!dtlb_hit)
+							dexception_tlb_refill = 1'b1;
 						else
-							begin
-								dphy_addr = dtlb_phy_addr;
-								if(!dtlb_hit)
-									dexception_tlb_refill = 1'b1;
+							if(!dtlb_entry_v)
+								dexception_tlb_invalid = 1'b1;
+							else
+								if(!dtlb_entry_d && dm_wr_i)  
+									dexception_tlb_mod = 1'b1;
 								else
-									if(!dtlb_entry_v)
-										dexception_tlb_invalid = 1'b1;
+									if(dtlb_entry_c == 3'd2 || dtlb_entry_c == 3'd7)
+										dbus_memory_en = 1'b1;
 									else
-										if(!dtlb_entry_d && dm_wr_i)  
-											dexception_tlb_mod = 1'b1;
-										else
-											if(dtlb_entry_c == 3'd2 || dtlb_entry_c == 3'd7)
-												dbus_memory_en = 1'b1;
-											else
-												dcache_en = 1'b1;
-							end
+										dcache_en = 1'b1;
 					end
 			endcase
 		end

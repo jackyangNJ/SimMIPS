@@ -24,6 +24,6 @@ output [5:0]	exception_code_o;
 output	exception_occur_o;
 
 
-assign vector_addr_o = 0xBFC00000;
+assign vector_addr_o = 32'hBFC00000;
 
 endmodule

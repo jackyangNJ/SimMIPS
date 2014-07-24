@@ -1,4 +1,4 @@
-`include "InstructionConstants.v"
+`include "CPUConstants.v"
 module ID(
 	input cu_intr,
 	input [31:0]id_bpu_pc,
@@ -23,14 +23,29 @@ module ID(
 	output id_shift_sel,
 	output id_ext_top,
 	output [1:0] id_regdst,
-	output [1:0]id_cp0_out_sel,
-	output id_cp0_in_sel,
-	output status_shift_sel,
+	// output [1:0]id_cp0_out_sel,
+	// output id_cp0_in_sel,
+	// output status_shift_sel,
 	output epc_sel,
 	output id_of_ctrl,
-	output [2:0]cp0_wen,
-	output [31:0]cause_in,
-	output [3:0] mdu_op_o
+	// output [2:0]cp0_wen,
+	// output [31:0]cause_in,
+	output [3:0] mdu_op_o,
+	
+	//mtc0,mfc0
+	cp0_wen_o,
+	cp0_addr_o,
+	cp0_data_i,
+	cp0_data_o,
+	/* specified instruction available state */
+	instr_ERET_o,
+	instr_SYSCALL_o,
+	
+	/* tlb signals */
+	cp0_entryhi_wen_o,
+	cp0_entrylo0_wen_o,
+	cp0_entrylo1_wen_o,
+	
 );
 	wire [5:0] instr_op = id_instr[31:26];
 	wire [5:0] instr_tail = id_instr[5:0];

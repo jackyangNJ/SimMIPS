@@ -5,7 +5,7 @@ module CP0(
 	cpu_pause_i,
 	/* specified instruction available state */
 	instr_ERET_i,
-	instr_SYSCALL_i	
+	instr_SYSCALL_i,
 	/* normal r/w interface */
 	cp0_wen_i,
 	cp0_addr_i,
@@ -16,7 +16,7 @@ module CP0(
 	cp0_epc_o,
 	cp0_status_o,
 	cp0_config_o,
-	cp0_cause_o,
+	// cp0_cause_o,
 	cp0_random_o,
 	cp0_index_o,
 	cp0_entryhi_o,
@@ -26,12 +26,13 @@ module CP0(
 	/* cp0 data in */
 	cp0_epc_i,
 	cp0_entryhi_i,
-	cp0_entryhi_wen_i.
+	cp0_entryhi_wen_i,
 	cp0_entrylo0_i,
 	cp0_entrylo0_wen_i,
 	cp0_entrylo1_i,
 	cp0_entrylo1_wen_i,
-	
+	/* tlb signal */
+	tlb_probe_success_i,
 	/* exceptions */
 	exception_addr_error_i,
 	exception_tlb_refill_i,
@@ -43,7 +44,7 @@ module CP0(
 	hw_interrupt2_i,
 	hw_interrupt3_i,
 	hw_interrupt4_i,
-	hw_interrupt5_i,
+	hw_interrupt5_i
 	
 );
 input clk,reset,cpu_pause_i;
@@ -54,10 +55,12 @@ input [4:0]cp0_addr_i;
 input [31:0] cp0_data_i;
 output [31:0] cp0_data_o;
 //cp0 register input
-input cp0_status_wen_i,cp0_epc_wen_i,cp0_entryhi_wen_i,cp0_entrylo0_wen_i,cp0_entrylo1_wen_i;
+input cp0_entryhi_wen_i,cp0_entrylo0_wen_i,cp0_entrylo1_wen_i;
 input [31:0] cp0_epc_i,cp0_entryhi_i,cp0_entrylo0_i,cp0_entrylo1_i;
 //cp0 output
-output [31:0] cp0_epc_o,cp0_status_o,cp0_config_o,cp0_cause_o,cp0_random_o,cp0_index_o,cp0_entryhi_o,cp0_entrylo0_o,cp0_entrylo1_o;
+output [31:0] cp0_epc_o,cp0_status_o,cp0_config_o,cp0_random_o,cp0_index_o,cp0_entryhi_o,cp0_entrylo0_o,cp0_entrylo1_o;
+//tlb signal
+input tlb_probe_success_i;
 //exceptions
 input exception_addr_error_i,exception_tlb_refill_i,exception_tlb_mod_i,exception_tlb_invalid_i,exception_tlb_rw_i;
 input hw_interrupt0_i,hw_interrupt1_i,hw_interrupt2_i,hw_interrupt3_i,hw_interrupt4_i,hw_interrupt5_i;
@@ -90,6 +93,11 @@ input hw_interrupt0_i,hw_interrupt1_i,hw_interrupt2_i,hw_interrupt3_i,hw_interru
 	//CP0 Cause
 	reg [5:0] cp0_cause_ip;
 	reg [4:0] cp0_cause_exc_code;
+	//CP0 config
+	wire cp0_config_m = 1'b1;
+	wire cp0_config_be = 1'b0; //little endian
+	wire [2:0] cp0_config_mt = 3'd1;
+	wire [2:0] cp0_config_k0 = 3'd2;
 	
 	
 	
@@ -98,11 +106,11 @@ input hw_interrupt0_i,hw_interrupt1_i,hw_interrupt2_i,hw_interrupt3_i,hw_interru
 	begin
 		if(!cpu_pause_i)
 			begin
-				if(tlb_probe_faled)
+				if(tlb_probe_success_i)
 					cp0_index_p <= 1'b1;
 				else
 					cp0_index_p <= 1'b0;
-				if(cp0_wen_i && cp0_addr_i ==`CP0_INDEX_NUM)
+				if(cp0_wen_i && cp0_addr_i ==`CP0_INDEX_ADDR)
 						cp0_index_index <= cp0_data_i[3:0];
 			end
 	end
@@ -128,7 +136,7 @@ input hw_interrupt0_i,hw_interrupt1_i,hw_interrupt2_i,hw_interrupt3_i,hw_interru
 		else
 			if(!cpu_pause_i)
 				begin
-					if(cp0_wen_i && cp0_addr_i == `CP0_WIRED_NUM)
+					if(cp0_wen_i && cp0_addr_i == `CP0_WIRED_ADDR)
 						cp0_wired <= cp0_data_i[3:0];
 				end
 	end
@@ -187,7 +195,7 @@ input hw_interrupt0_i,hw_interrupt1_i,hw_interrupt2_i,hw_interrupt3_i,hw_interru
 					{cp0_cause_ip,cp0_cause_exc_code} <= {cp0_data_i[15:10],cp0_data_i[6:2]};
 				else
 					begin
-						case({intr_occur,exception_addr_error_i,exception_tlb_mod_i,exception_tlb_refill_i,exception_tlb_invalid_i,instr_SYSCALL})
+						casex({intr_occur,exception_addr_error_i,exception_tlb_mod_i,exception_tlb_refill_i,exception_tlb_invalid_i,instr_SYSCALL_i})
 							/* interrupts */
 							6'b1xxxxx:
 								begin
@@ -257,12 +265,21 @@ input hw_interrupt0_i,hw_interrupt1_i,hw_interrupt2_i,hw_interrupt3_i,hw_interru
 				cp0_data_output = {16'b0,cp0_cause_ip,3'b0,cp0_cause_exc_code,2'b0};
 			`CP0_EPC_ADDR:
 				cp0_data_output = cp0_epc;
-			`CP0_
+			`CP0_CONFIG_ADDR:
+				cp0_data_output = {cp0_config_m,15'b0,cp0_config_be,5'b0,cp0_config_mt,4'b0,cp0_config_k0};
 			default:
 				cp0_data_output = 0;
 		endcase
 	end
 	
 	assign cp0_data_o = cp0_data_output;
+	assign cp0_epc_o = cp0_epc;
+	assign cp0_entryhi_o = {cp0_entryhi_vpn2,5'b0,cp0_entryhi_asid};
+	assign cp0_entrylo0_o = {6'b0,cp0_entrylo0};
+	assign cp0_entrylo1_o = {6'b0,cp0_entrylo1};
+	assign cp0_status_o = {16'b0,cp0_status_im,5'b0,cp0_status_um,2'b0,cp0_status_exl,cp0_status_ie};
+	assign cp0_index_o = {cp0_index_p,27'b0,cp0_index_index};
+	assign cp0_random_o = {28'b0,cp0_random};
+	assign cp0_config_o = {cp0_config_m,15'b0,cp0_config_be,5'b0,cp0_config_mt,4'b0,cp0_config_k0};
 	
 endmodule
