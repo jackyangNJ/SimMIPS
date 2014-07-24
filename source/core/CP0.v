@@ -2,23 +2,17 @@
 module CP0(
 	clk,
 	reset,
-	input [2:0]cp0_wen,
-	input [31:0]id_b,
-	input id_cp0_in_sel,
-	input status_shift_sel,
-	input [31:0]cause_in,
-	input [31:0]epc_in,
-	input [1:0]id_cp0_out_sel,
-	output [31:0]id_cp0_out,
-	output [31:0]status_out,
-	output [31:0]epc_out,
-	
-	//normal r/w interface
+	cpu_pause_i,
+	/* specified instruction available state */
+	instr_ERET_i,
+	instr_SYSCALL_i	
+	/* normal r/w interface */
 	cp0_wen_i,
 	cp0_addr_i,
 	cp0_data_i,
 	cp0_data_o,
 	
+	/* cp0 data out */
 	cp0_epc_o,
 	cp0_status_o,
 	cp0_config_o,
@@ -28,12 +22,9 @@ module CP0(
 	cp0_entryhi_o,
 	cp0_entrylo0_o,
 	cp0_entrylo1_o,
-	
-	cp0_status_i,
-	cp0_status_wen_i,
-	cp0_status_i,
+
+	/* cp0 data in */
 	cp0_epc_i,
-	cp0_epc_wen_i,
 	cp0_entryhi_i,
 	cp0_entryhi_wen_i.
 	cp0_entrylo0_i,
@@ -41,6 +32,7 @@ module CP0(
 	cp0_entrylo1_i,
 	cp0_entrylo1_wen_i,
 	
+	/* exceptions */
 	exception_addr_error_i,
 	exception_tlb_refill_i,
 	exception_tlb_mod_i,
@@ -53,12 +45,9 @@ module CP0(
 	hw_interrupt4_i,
 	hw_interrupt5_i,
 	
-	cpu_pause_i,
-	instruction_i,
-	
-	
 );
 input clk,reset,cpu_pause_i;
+input instr_ERET_i,instr_SYSCALL_i;
 //normal cp0 registers r/w
 input cp0_wen_i;
 input [4:0]cp0_addr_i;
@@ -66,24 +55,18 @@ input [31:0] cp0_data_i;
 output [31:0] cp0_data_o;
 //cp0 register input
 input cp0_status_wen_i,cp0_epc_wen_i,cp0_entryhi_wen_i,cp0_entrylo0_wen_i,cp0_entrylo1_wen_i;
-input [31:0] cp0_status_i
-
+input [31:0] cp0_epc_i,cp0_entryhi_i,cp0_entrylo0_i,cp0_entrylo1_i;
+//cp0 output
+output [31:0] cp0_epc_o,cp0_status_o,cp0_config_o,cp0_cause_o,cp0_random_o,cp0_index_o,cp0_entryhi_o,cp0_entrylo0_o,cp0_entrylo1_o;
+//exceptions
+input exception_addr_error_i,exception_tlb_refill_i,exception_tlb_mod_i,exception_tlb_invalid_i,exception_tlb_rw_i;
+input hw_interrupt0_i,hw_interrupt1_i,hw_interrupt2_i,hw_interrupt3_i,hw_interrupt4_i,hw_interrupt5_i;
 /* Constants */
-	/* instruction types */
-	wire [5:0] instr_op = instruction_i[31:26];
-	wire [5:0] instr_tail = instruction_i[5:0];
-	wire [4:0] instr_rs = instruction_i[25:21];
-	wire [4:0] instr_rt = instruction_i[20:16];
-	wire instr_MTC0 = (instr_op  == `OP_COP0 || instr_rs == `RS_MT);
-	wire instr_MFC0 = (instr_op  == `OP_COP0 || instr_rs == `RS_MF);
-	wire instr_ERET = (instr_op  == `OP_COP0 || instr_tail == `TAIL_ERET);
-	wire instr_SYSCALL = (instr_op  == `OP_SPECIAL || instr_tail == `TAIL_SYSCALL);
-	
 	/* interrupts occur */
-	wire intr_occur = (hw_interrupt0_i || hw_interrupt1_i ||	hw_interrupt2_i || hw_interrupt3_i || hw_interrupt4_i || hw_interrupt5_i) && (!cp0_status_exl) && cp0_status_ie;
+	wire intr_occur = (hw_interrupt0_i || hw_interrupt1_i || hw_interrupt2_i || hw_interrupt3_i || hw_interrupt4_i || hw_interrupt5_i) && (!cp0_status_exl) && cp0_status_ie;
 	/* exception occur*/
 	wire exc_tlb_occur = exception_addr_error_i || exception_tlb_invalid_i || exception_tlb_mod_i || exception_tlb_refill_i;
-	wire exc_occur = intr_occur || instr_SYSCALL || exc_tlb_occur;
+	wire exc_occur = intr_occur || instr_SYSCALL_i || exc_tlb_occur;
 /* CP0 Registers */
 	// reg [31:0]status;
 	// reg [31:0]cause;
@@ -137,7 +120,7 @@ input [31:0] cp0_status_i
 			end
 	end
 	
-	// CP0 Wired
+	/* CP0 Wired */
 	always@(posedge clk)
 	begin
 		if(reset)
@@ -189,7 +172,7 @@ input [31:0] cp0_status_i
 						if(exc_occur)
 							cp0_status_exl <= 1'b1;
 						else
-							if(instr_ERET)
+							if(instr_ERET_i)
 								cp0_status_exl <= 0;
 					end
 			end
@@ -251,36 +234,6 @@ input [31:0] cp0_status_i
 	end
 
 	
-	always @ (posedge clk) begin
-		if (reset) begin
-			epc = 32'd0;
-			cause = 32'd0;
-			status = 32'd0;
-		end
-		else begin
-			if (cp0_wen[0] == 1'b1 && pause == 1'b0) begin
-				if (id_cp0_in_sel)
-					epc = epc_in;
-				else
-					epc = id_b;
-			end
-			if (cp0_wen[1] == 1'b1 && pause == 1'b0) begin
-				if (id_cp0_in_sel)
-					cause = cause_in;
-				else
-					cause = id_b;
-			end
-			if (cp0_wen[2] == 1'b1 && pause == 1'b0) begin
-				if (id_cp0_in_sel && status_shift_sel)
-					status = {2'b00, status[31:2]};
-				else if (id_cp0_in_sel && !status_shift_sel)
-					status = {status[29:0], 2'b00};
-				else
-					status = id_b;
-			end
-		end
-	end
-	
 	//CP0 read
 	reg [31:0] cp0_data_output;
 	always@(*)
@@ -304,15 +257,12 @@ input [31:0] cp0_status_i
 				cp0_data_output = {16'b0,cp0_cause_ip,3'b0,cp0_cause_exc_code,2'b0};
 			`CP0_EPC_ADDR:
 				cp0_data_output = cp0_epc;
+			`CP0_
 			default:
 				cp0_data_output = 0;
 		endcase
 	end
+	
 	assign cp0_data_o = cp0_data_output;
-	
-	
-	// assign id_cp0_out = (id_cp0_out_sel==2'd2) ? epc : ((id_cp0_out_sel==2'd1) ? cause : status);
-	// assign status_out = status;
-	// assign epc_out = epc;
 	
 endmodule

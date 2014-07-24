@@ -94,8 +94,7 @@ output cpu_pause_o;
 wire [3:0]cp0_random_random = cp0_random_i[3:0];
 wire [3:0]cp0_index_index = cp0_index_i[3:0];
 wire [2:0] cp0_config_k0 = cp0_config_i[2:0];
-wire cp0_status_exl = cp0_status_i[1];
-wire cp0_status_erl = cp0_status_i[2];
+wire cp0_status_exl = cp0_status_i[1];                  
 wire cp0_status_um = cp0_status_i[4];
 
 //connected with JTLB
@@ -110,7 +109,7 @@ wire dtlb_entry_d,dtlb_entry_v;
 wire [31:0] dtlb_phy_addr,itlb_phy_addr;
 
 
-wire cpu_user_mode = !cp0_status_erl && !cp0_status_exl && cp0_status_um;
+wire cpu_user_mode = !cp0_status_exl && cp0_status_um;
 // wire cpu_kernel_mode = !cpu_user_mode;
 
 
@@ -310,12 +309,11 @@ assign exception_addr_error_o = iexception_addr_error & dexception_addr_error;
 assign exception_tlb_invalid_o = iexception_tlb_invalid & dexception_tlb_invalid;
 assign exception_tlb_mod_o = dexception_tlb_mod;
 assign exception_tlb_refill_o = iexception_tlb_refill & dexception_tlb_refill;
+assign exception_tlb_rw_o = (iexception_addr_error || iexception_tlb_invalid || iexception_tlb_refill)? 0 : dm_wr_i;
 //cpu
 assign instruction_o = instruction;
 assign dm_data_o = dm_data;
 assign cpu_pause_o = ~(icache_data_ready_i || ibus_memory_data_ready_i) || 
 					   ~((dm_en_i && (dcache_data_ready_i || dbus_memory_data_ready_i || dbus_peripheral_data_ready_i)) || !dm_en_i);
 					   
-//TODO
-assign exception_tlb_rw_o = 1'b1;
 endmodule
