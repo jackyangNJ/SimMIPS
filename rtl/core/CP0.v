@@ -1,79 +1,68 @@
 `include "CPUConstants.v"
 module CP0(
-	clk,
-	reset,
-	cpu_pause_i,
+	input clk,
+	input reset,
+	input cpu_pause_i,
 	/* specified instruction available state */
-	instr_ERET_i,
-	instr_SYSCALL_i,
+	input instr_ERET_i,
 	/* normal r/w interface */
-	cp0_wen_i,
-	cp0_addr_i,
-	cp0_data_i,
-	cp0_data_o,
+	input         cp0_wen_i,
+	input [31:0]  cp0_addr_i,
+	input [31:0]  cp0_data_i,
+	output [31:0] cp0_data_o,
 	
 	/* cp0 data out */
-	cp0_epc_o,
-	cp0_status_o,
-	cp0_config_o,
+	output [31:0] cp0_epc_o,
+	output [31:0] cp0_status_o,
+	output [31:0] cp0_config_o,
 	// cp0_cause_o,
-	cp0_random_o,
-	cp0_index_o,
-	cp0_entryhi_o,
-	cp0_entrylo0_o,
-	cp0_entrylo1_o,
-
+	output [31:0] cp0_random_o,
+	output [31:0] cp0_index_o,
+	output [31:0] cp0_entryhi_o,
+	output [31:0] cp0_entrylo0_o,
+	output [31:0] cp0_entrylo1_o,
 	/* cp0 data in */
-	cp0_epc_i,
-	cp0_entryhi_i,
-	cp0_entryhi_wen_i,
-	cp0_entrylo0_i,
-	cp0_entrylo0_wen_i,
-	cp0_entrylo1_i,
-	cp0_entrylo1_wen_i,
+	input [31:0]  cp0_epc_i,
+	input [31:0]  cp0_entryhi_i,
+	input         cp0_entryhi_data_valid_i,
+	input [31:0]  cp0_entrylo0_i,
+	input         cp0_entrylo0_data_valid_i,
+	input [31:0]  cp0_entrylo1_i,
+	input         cp0_entrylo1_data_valid_i,
 	/* tlb signal */
-	tlb_probe_success_i,
+	input [3:0]   tlb_entryhi_match_index_i,
+	input         tlb_entryhi_hit_i,
+	input [31:0]  bad_vaddr_i,
 	/* exceptions */
-	exception_addr_error_i,
-	exception_tlb_refill_i,
-	exception_tlb_mod_i,
-	exception_tlb_invalid_i,
-	exception_tlb_rw_i,
-	hw_interrupt0_i,
-	hw_interrupt1_i,
-	hw_interrupt2_i,
-	hw_interrupt3_i,
-	hw_interrupt4_i,
-	hw_interrupt5_i
+	input         exception_addr_error_i,
+	input         exception_tlb_refill_i,
+	input         exception_tlb_mod_i,
+	input         exception_tlb_invalid_i,
+	input         exception_tlb_rw_i,
+	input         exception_syscall_i,
+	input         hw_interrupt0_i,
+	input         hw_interrupt1_i,
+	input         hw_interrupt2_i,
+	input         hw_interrupt3_i,
+	input         hw_interrupt4_i,
+	input         hw_interrupt5_i
 	
 );
-input clk,reset,cpu_pause_i;
-input instr_ERET_i,instr_SYSCALL_i;
-//normal cp0 registers r/w
-input cp0_wen_i;
-input [4:0]cp0_addr_i;
-input [31:0] cp0_data_i;
-output [31:0] cp0_data_o;
-//cp0 register input
-input cp0_entryhi_wen_i,cp0_entrylo0_wen_i,cp0_entrylo1_wen_i;
-input [31:0] cp0_epc_i,cp0_entryhi_i,cp0_entrylo0_i,cp0_entrylo1_i;
-//cp0 output
-output [31:0] cp0_epc_o,cp0_status_o,cp0_config_o,cp0_random_o,cp0_index_o,cp0_entryhi_o,cp0_entrylo0_o,cp0_entrylo1_o;
-//tlb signal
-input tlb_probe_success_i;
-//exceptions
-input exception_addr_error_i,exception_tlb_refill_i,exception_tlb_mod_i,exception_tlb_invalid_i,exception_tlb_rw_i;
-input hw_interrupt0_i,hw_interrupt1_i,hw_interrupt2_i,hw_interrupt3_i,hw_interrupt4_i,hw_interrupt5_i;
 /* Constants */
 	/* interrupts occur */
-	wire intr_occur = (hw_interrupt0_i || hw_interrupt1_i || hw_interrupt2_i || hw_interrupt3_i || hw_interrupt4_i || hw_interrupt5_i) && (!cp0_status_exl) && cp0_status_ie;
+	wire interrupt0 = hw_interrupt0_i && cp0_status_im[0];
+	wire interrupt1 = hw_interrupt1_i && cp0_status_im[1];
+	wire interrupt2 = hw_interrupt2_i && cp0_status_im[2];
+	wire interrupt3 = hw_interrupt3_i && cp0_status_im[3];
+	wire interrupt4 = hw_interrupt4_i && cp0_status_im[4];
+	wire interrupt5 = hw_interrupt5_i && cp0_status_im[5];
+	wire intr_occur = (interrupt0 || interrupt1 || interrupt2 || interrupt3 ||interrupt4 || interrupt5)
+						&& (!cp0_status_exl) && cp0_status_ie;
 	/* exception occur*/
 	wire exc_tlb_occur = exception_addr_error_i || exception_tlb_invalid_i || exception_tlb_mod_i || exception_tlb_refill_i;
-	wire exc_occur = intr_occur || instr_SYSCALL_i || exc_tlb_occur;
+	wire exc_occur = intr_occur || exception_syscall_i || exc_tlb_occur;
+	
 /* CP0 Registers */
-	// reg [31:0]status;
-	// reg [31:0]cause;
-	// reg [31:0]epc;
 	reg [31:0] cp0_epc;
 	// CP0 Index
 	reg cp0_index_p;
@@ -87,6 +76,8 @@ input hw_interrupt0_i,hw_interrupt1_i,hw_interrupt2_i,hw_interrupt3_i,hw_interru
 	reg [25:0]cp0_entrylo1;
 	reg [18:0] cp0_entryhi_vpn2;
 	reg [7:0] cp0_entryhi_asid;
+	//CP0 BadVAddr
+	reg [31:0] cp0_bad_vaddr;
 	//CP0 Status
 	reg cp0_status_ie,cp0_status_exl,cp0_status_um;
 	reg [5:0] cp0_status_im;
@@ -99,21 +90,23 @@ input hw_interrupt0_i,hw_interrupt1_i,hw_interrupt2_i,hw_interrupt3_i,hw_interru
 	wire [2:0] cp0_config_mt = 3'd1;
 	wire [2:0] cp0_config_k0 = 3'd2;
 	
-	
-	
 	/* CP0 Index */
 	always@(posedge clk)
 	begin
 		if(!cpu_pause_i)
 			begin
-				if(tlb_probe_success_i)
-					cp0_index_p <= 1'b1;
-				else
+				if(tlb_entryhi_hit_i)
 					cp0_index_p <= 1'b0;
+				else
+					cp0_index_p <= 1'b1;
 				if(cp0_wen_i && cp0_addr_i ==`CP0_INDEX_ADDR)
 						cp0_index_index <= cp0_data_i[3:0];
+				else 
+					if(tlb_entryhi_hit_i)
+						cp0_index_index <= tlb_entryhi_match_index_i;
 			end
 	end
+	
 	/* CP0 Random */
 	always@(posedge clk)
 	begin
@@ -141,6 +134,15 @@ input hw_interrupt0_i,hw_interrupt1_i,hw_interrupt2_i,hw_interrupt3_i,hw_interru
 				end
 	end
 
+	/* CP0 BadVAddr*/
+	always@(posedge clk)
+	begin		
+		if(!cpu_pause_i)
+			begin
+				cp0_bad_vaddr <= bad_vaddr_i;
+			end
+	end
+	
 	//CP0 Entryhi,Entrylo0 and EntryLo1
 	always @ (posedge clk) 
 	begin
@@ -150,20 +152,23 @@ input hw_interrupt0_i,hw_interrupt1_i,hw_interrupt2_i,hw_interrupt3_i,hw_interru
 				if(cp0_wen_i && cp0_addr_i == `CP0_ENTRYLO0_ADDR)
 					cp0_entrylo0 <= cp0_data_i[25:0];
 				else
-					if(cp0_entrylo0_wen_i)
+					if(cp0_entrylo1_data_valid_i)
 						cp0_entrylo0 <= cp0_entrylo0_i[25:0];
 				//entrylo1		
 				if(cp0_wen_i && cp0_addr_i == `CP0_ENTRYLO1_ADDR)
 					cp0_entrylo1 <= cp0_data_i[25:0];
 				else
-					if(cp0_entrylo1_wen_i)
+					if(cp0_entrylo1_data_valid_i)
 						cp0_entrylo1 <= cp0_entrylo0_i[25:0];
 				//entryhi
-				if(cp0_wen_i && cp0_addr_i == `CP0_ENTRYHI_ADDR)
-					{cp0_entryhi_vpn2,cp0_entryhi_asid} <= {cp0_data_i[31:13],cp0_data_i[7:0]};
+				if(exception_tlb_invalid_i || exception_tlb_mod_i || exception_tlb_refill_i)
+					cp0_entryhi_vpn2 <= bad_vaddr_i[31:13];
 				else
-					if(cp0_entryhi_wen_i)
-						{cp0_entryhi_vpn2,cp0_entryhi_asid} <= {cp0_entryhi_i[31:13],cp0_entryhi_i[7:0]};	
+					if(cp0_wen_i && cp0_addr_i == `CP0_ENTRYHI_ADDR)
+						{cp0_entryhi_vpn2,cp0_entryhi_asid} <= {cp0_data_i[31:13],cp0_data_i[7:0]};
+					else
+						if(cp0_entryhi_data_valid_i)
+							{cp0_entryhi_vpn2,cp0_entryhi_asid} <= {cp0_entryhi_i[31:13],cp0_entryhi_i[7:0]};	
 			end
 	end
 	
@@ -195,16 +200,17 @@ input hw_interrupt0_i,hw_interrupt1_i,hw_interrupt2_i,hw_interrupt3_i,hw_interru
 					{cp0_cause_ip,cp0_cause_exc_code} <= {cp0_data_i[15:10],cp0_data_i[6:2]};
 				else
 					begin
-						casex({intr_occur,exception_addr_error_i,exception_tlb_mod_i,exception_tlb_refill_i,exception_tlb_invalid_i,instr_SYSCALL_i})
+						casex({intr_occur,exception_addr_error_i,exception_tlb_mod_i,
+						exception_tlb_refill_i,exception_tlb_invalid_i,exception_syscall_i})
 							/* interrupts */
 							6'b1xxxxx:
 								begin
-									cp0_cause_ip[5] <= hw_interrupt5_i && cp0_status_im[5];
-									cp0_cause_ip[4] <= hw_interrupt4_i && cp0_status_im[4];
-									cp0_cause_ip[3] <= hw_interrupt3_i && cp0_status_im[3];
-									cp0_cause_ip[2] <= hw_interrupt2_i && cp0_status_im[2];
-									cp0_cause_ip[1] <= hw_interrupt1_i && cp0_status_im[1];
-									cp0_cause_ip[0] <= hw_interrupt0_i && cp0_status_im[0];
+									cp0_cause_ip[5] <= interrupt5;
+									cp0_cause_ip[4] <= interrupt4;
+									cp0_cause_ip[3] <= interrupt3;
+									cp0_cause_ip[2] <= interrupt2;
+									cp0_cause_ip[1] <= interrupt1;
+									cp0_cause_ip[0] <= interrupt0;
 								end										
 							6'b01xxxx:
 								if(exception_tlb_rw_i)
@@ -242,7 +248,7 @@ input hw_interrupt0_i,hw_interrupt1_i,hw_interrupt2_i,hw_interrupt3_i,hw_interru
 	end
 
 	
-	//CP0 read
+	/* CP0 read,for instruction MFC0 */
 	reg [31:0] cp0_data_output;
 	always@(*)
 	begin
@@ -267,6 +273,8 @@ input hw_interrupt0_i,hw_interrupt1_i,hw_interrupt2_i,hw_interrupt3_i,hw_interru
 				cp0_data_output = cp0_epc;
 			`CP0_CONFIG_ADDR:
 				cp0_data_output = {cp0_config_m,15'b0,cp0_config_be,5'b0,cp0_config_mt,4'b0,cp0_config_k0};
+			`CP0_BADVADDR_ADDR:
+				cp0_data_output = cp0_bad_vaddr;
 			default:
 				cp0_data_output = 0;
 		endcase

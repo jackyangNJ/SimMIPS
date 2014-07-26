@@ -6,6 +6,7 @@ module ExMem_register(
 	input ex_memtoreg,
 	input ex_memwr,
 	input ex_dmen,
+	input [31:0] ex_pc_i,
 	input [31:0]ex_result,
 	input [31:0]ex_b,
 	input [4:0]ex_regdst_addr,
@@ -15,7 +16,8 @@ module ExMem_register(
 	output mem_memwr,
 	output [31:0]mem_result,
 	output [31:0]mem_rt,
-	output [4:0]mem_regdst_addr
+	output [4:0]mem_regdst_addr,
+	output [31:0] mem_pc_o,
 );
 
 	reg E_regwr;
@@ -25,7 +27,7 @@ module ExMem_register(
 	reg [31:0]E_result;
 	reg [31:0]E_b;
 	reg [4:0]E_regdst_addr;
-	
+	reg [31:0] E_pc;
 	always @ (posedge clk) begin
 		if (reset) begin
 			E_regwr = 1'b0;
@@ -35,8 +37,9 @@ module ExMem_register(
 			E_result = 32'd0;
 			E_b = 32'd0;
 			E_regdst_addr = 5'd0;
+			E_pc = 32'b0;
 		end
-		else if (pa_idexmemwr == 1'b0) begin
+		else if (!pa_idexmemwr) begin
 			E_regwr = ex_regwr;
 			E_memtoreg = ex_memtoreg;
 			E_memwr = ex_memwr;
@@ -44,6 +47,7 @@ module ExMem_register(
 			E_result = ex_result;
 			E_b = ex_b;
 			E_regdst_addr = ex_regdst_addr;
+			E_pc = ex_pc_i;
 		end
 	end
 	
@@ -54,5 +58,5 @@ module ExMem_register(
 	assign mem_result = E_result;
 	assign mem_rt = E_b;
 	assign mem_regdst_addr = E_regdst_addr;
-
+	assign mem_pc_o = E_pc;
 endmodule

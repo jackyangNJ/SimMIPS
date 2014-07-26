@@ -7,6 +7,7 @@ module IDEx_register(
 	input id_memtoreg,
 	input id_memwr,
 	input [31:0] return_addr_i,
+	input [31:0] id_pc_i,
 	input [2:0]id_ex_result_sel,
 	input id_alu_b_sel,
 	input [3:0] id_alu_op,
@@ -36,7 +37,8 @@ module IDEx_register(
 	output [31:0]ex_imm_ext,
 	output [4:0]ex_regdst_addr,
 	output [31:0]ex_cp0_out,
-	output [31:0]return_addr_o
+	output [31:0]return_addr_o,
+	output [31:0]ex_pc_o
 );
 
 	reg I_regwr;
@@ -56,6 +58,7 @@ module IDEx_register(
 	reg [4:0]I_regdst_addr;
 	reg [31:0]I_cp0_out;
 	reg [31:0]I_return_addr;
+	reg [31:0]I_pc;
 	always @ (posedge clk) begin
 		if (wash_idex || reset) begin
 			I_regwr <= 1'b0;
@@ -75,6 +78,7 @@ module IDEx_register(
 			I_regdst_addr <= 5'd0;
 			I_cp0_out <= 32'd0;
 			I_return_addr <= 32'b0;
+			I_pc <= 32'b0;
 		end
 		else begin
 			if (pa_idexmemwr == 1'b0) begin
@@ -95,6 +99,7 @@ module IDEx_register(
 				I_regdst_addr <= id_regdst_addr;
 				I_cp0_out <= id_cp0_out;
 				I_return_addr <= return_addr_i;
+				I_pc <= id_pc_i;
 			end
 		end
 	end
@@ -116,4 +121,5 @@ module IDEx_register(
 	assign ex_regdst_addr = I_regdst_addr;
 	assign ex_cp0_out = I_cp0_out;
 	assign return_addr_o = I_return_addr;
+	assign ex_pc_o = I_pc;
 endmodule

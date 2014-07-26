@@ -84,10 +84,13 @@ wire[31:0] 	ex_alu_out;
 wire[31:0] 	ex_cp0_out;
 wire[2:0] 	ex_result_sel;
 wire[31:0]	ex_return_addr;
+wire[31:0]  ex_pc;
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////mem stage////////////////////////////////////
+wire [31:0] mem_pc;
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////wr stage////////////////////////////////////
+
 ///////////////////////////////////////////////////////////////////////
 wire		cu_intr;
 
@@ -403,6 +406,7 @@ IDEx_register	b2v_inst19(
 	.pa_idexmemwr(pa_idexmemwr),
 	.wash_idex(wash_idex),
 	.return_addr_i(id_pc_4_out),
+	.id_pc_i(if_pc_out),
 	.id_regwr(id_regwr),
 	.id_memtoreg(id_memtoreg),
 	.id_memwr(id_memwr),
@@ -435,7 +439,9 @@ IDEx_register	b2v_inst19(
 	.ex_result_sel(ex_result_sel),
 	.ex_shift_amount(ex_shift_amount),
 	.return_addr_o(ex_return_addr),
-	.ex_shift_op(ex_shift_op));
+	.ex_shift_op(ex_shift_op),
+	.ex_pc_o(ex_pc)
+	);
 	
 ///////////////////////////////Ex stage////////////////////////////////////
 Multi_2_32	ex_alu_b_selector(
@@ -483,6 +489,7 @@ ExMem_register	b2v_inst26(
 	.clk(clk),
 	.reset(reset),
 	.pa_idexmemwr(pa_idexmemwr),
+	.ex_pc_i(ex_pc),
 	.ex_regwr(ex_regwr),
 	.ex_memtoreg(ex_memtoreg),
 	.ex_memwr(ex_memwr),
@@ -490,6 +497,7 @@ ExMem_register	b2v_inst26(
 	.ex_b(ex_b),
 	.ex_regdst_addr(ex_regdst_addr),
 	.ex_result(ex_result),
+	.mem_pc_o(mem_pc),
 	.mem_regwr(mem_regwr),
 	.mem_dmen(dm_en_o),
 	.mem_memtoreg(mem_memtoreg),

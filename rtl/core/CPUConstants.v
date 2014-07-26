@@ -106,8 +106,10 @@
 `define TAIL_MUL	(6'b000010)
 `define TAIL_DIV	(6'b011010)
 `define TAIL_DIVU	(6'b011011)
-`define TAIL_TLBP 	(6'b001000)
 `define TAIL_TLBR 	(6'b000001)
+`define TAIL_TLBWI 	(6'b000010)
+`define TAIL_TLBWR 	(6'b000110)
+`define TAIL_TLBP 	(6'b001000)
 //其他字段常量，BGEZ、BLTZ的rt字段用于标识，MFC0、MTC0的RS字段用于标识
 `define RT_BGEZ  	(5'b00001)
 `define RT_BGEZAL  	(5'b10001)

@@ -38,7 +38,7 @@ module CU(
 						(id_tail == `TAIL_SRLV))) || (id_op == `OP_SW) || (id_op == `OP_BEQ) || (id_op == `OP_BNE) ||
 						((id_op == `OP_COP0) && (id_rs == `RS_MT));
 	
-	//ADD、ADDU、CLO、CLZ、SLT、SLTU、SUB、SUBU、AND、NOR、OR、XOR、Jr、Lw、Sw、
+	//ADD、ADDU、CLO、CLZ、SLT、SLTU、SUB、SUBU、AND、NOR、OR、XOR、Jr、LW、SW、
 	//SLLV、SRAV、SRLV、BEQ、BNE、BGEZ、BLTZ、BGTZ、BLEZ、ADDI、ADDIU、SLTI、SLTIU、ANDI、ORI、XORI中的某一条
 	assign rs_en = ((id_op == `OP_SPECIAL) && ((id_tail == `TAIL_ADD) || (id_tail == `TAIL_ADDU) || (id_tail == `TAIL_SUB) ||
 						(id_tail == `TAIL_SUBU) || (id_tail == `TAIL_SLT) || (id_tail == `TAIL_SLTU) || (id_tail == `TAIL_AND) ||
