@@ -2,6 +2,7 @@ module MemWr_register(
 	input clk,
 	input reset,
 	input pa_idexmemwr,
+	input wash_memwr_i,
 	input mem_regwr,
 	input [31:0]mem_data,
 	input [4:0]mem_regdst_addr,
@@ -15,7 +16,7 @@ module MemWr_register(
 	reg M_regwr;
 
 	always @ (posedge clk) begin
-		if (reset) begin
+		if (reset || wash_memwr_i) begin
 			M_data = 32'd0;
 			M_regdst_addr = 5'd0;
 			M_regwr = 1'b0;

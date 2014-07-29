@@ -1,35 +1,40 @@
 `include "CPUConstants.v"
 module CU(
 	input pause,
-	input intr,
-	input [31:0]status_out,
 	input [31:0]id_instr,
 	input ex_memtoreg,
 	input id_bpu_wen_h,
 	input [4:0]ex_regdst_addr,
-	output reg pa_pc_ifid,
-	output reg wash_ifid,
-	output reg pa_idexmemwr,
-	output reg wash_idex,
-	output reg cu_intr
+	output pa_pc_ifid_o,
+	output wash_ifid_o,
+	output pa_idexmemwr_o,
+	output wash_idex_o,
+	output wash_exmem_o,
+	output wash_memwr_o,
+	// output reg cu_intr,
+	input cp0_interrupt_i,
+	input cp0_exception_tlb_i,
+	input cp0_exception_tlb_byinstr_i
 );
 
-	wire [4:0] id_rt;
-	wire [4:0] id_rs;
-	wire [5:0] id_op;
-	wire [5:0] id_tail;
-	
+
+reg pa_pc_ifid,pa_idexmemwr;
+reg wash_idex,wash_exmem,wash_memwr,wash_ifid;
+
+
+
 	wire rt_en;	//rt寄存器地址是否有效
 	wire rs_en;	//rs寄存器地址是否有效
 	wire load_use;	//是否存在Load-Use冒险
 	
 	wire is_branch;	//是否为branch指令
 	
-	assign id_rt[4:0] = id_instr[20:16];
-	assign id_rs[4:0] = id_instr[25:21];
-	assign id_op[5:0] = id_instr[31:26];
-	assign id_tail[5:0] = id_instr[5:0];
-	
+	wire [4:0]id_rt = id_instr[20:16];
+	wire [4:0]id_rs = id_instr[25:21];
+	wire [5:0]id_op = id_instr[31:26];
+	wire [5:0]id_tail = id_instr[5:0];
+	wire instr_ERET = (id_op == `OP_COP0 && id_tail == `TAIL_ERET);
+	wire instr_SYSCALL = (id_op == `OP_SPECIAL && id_tail == `TAIL_SYSCALL);
 	//ADD、ADDU、SLT、SLTU、SUB、SUBU、AND、NOR、OR、XOR、SW、SLL、SLLV、SRA、SRAV、SRL、SRLV、BEQ、BNE、MTC0中的某一条
 	assign rt_en = ((id_op == `OP_SPECIAL) && ((id_tail == `TAIL_ADD) || (id_tail == `TAIL_ADDU) || (id_tail == `TAIL_SUB) ||
 						(id_tail == `TAIL_SUBU) || (id_tail == `TAIL_SLT) || (id_tail == `TAIL_SLTU) || (id_tail == `TAIL_AND) ||
@@ -91,12 +96,11 @@ module CU(
 				wash_ifid = 1'b0;
 			else
 			begin
-				if(((status_out[1] == 1'b1) && (id_op == `OP_SPECIAL) && (id_tail == `TAIL_SYSCALL)) ||
-					((id_op == `OP_COP0) && (id_tail == `TAIL_ERET)))
+				if(instr_SYSCALL || instr_ERET || cp0_exception_tlb_i)
 					wash_ifid = 1'b1;
 				else
 				begin
-					if((intr == 1'b1) && (status_out[0] == 1'b1))
+					if(cp0_interrupt_i)
 						wash_ifid = 1'b1;
 					else
 					begin
@@ -110,30 +114,50 @@ module CU(
 		end
 	end
 	
-	//wash_idex_o的生成优先级：外部暂停 > Load-Use > 其他
+	//wash_idex的生成优先级：外部暂停 > Load-Use,data TLB exception > 其他
 	always@(*)
 	begin
 		if(pause == 1'b1)
 			wash_idex = 1'b0;
-		else if(load_use == 1'b1)
-			wash_idex = 1'b1;
-		else
-			wash_idex = 1'b0;
+		else 
+			if((cp0_exception_tlb_i && !cp0_exception_tlb_byinstr_i) || load_use)
+				wash_idex =1'b1;
+			else
+				wash_idex = 1'b0;
 	end
-	
-	//intr_en_o的生成
+	//wash_exmem,wash_memwr的生成优先级：外部暂停 > data TLB exception > 其他
 	always@(*)
 	begin
-		if((pause == 1'b1) || (load_use == 1'b1) ||
-			((status_out[1] == 1'b1) && (id_op == `OP_SPECIAL) && (id_tail == `TAIL_SYSCALL)) ||
-			((id_op == `OP_COP0) && (id_tail == `TAIL_ERET)))
-			cu_intr = 1'b0;
-		else
-		begin
-			if((intr == 1'b1) && (status_out[0] == 1'b1))
-				cu_intr = 1'b1;
-			else
-				cu_intr = 1'b0;
-		end
+		wash_exmem = 0;
+		wash_memwr = 0;
+		if(!pause)
+			begin
+				if(cp0_exception_tlb_i && !cp0_exception_tlb_byinstr_i)
+					begin
+						wash_exmem = 1'b1;
+						wash_memwr = 1'b1;
+					end
+			end
 	end
+	
+	
+	//intr_en_o的生成
+	// always@(*)
+	// begin
+		// if((pause == 1'b1) || (load_use == 1'b1) ||	instr_SYSCALL || instr_ERET)
+			// cu_intr = 1'b0;
+		// else
+		// begin
+			// if((cp0_interrupt_i == 1'b1) && (status_out[0] == 1'b1))
+				// cu_intr = 1'b1;
+			// else
+				// cu_intr = 1'b0;
+		// end
+	// end
+	assign pa_pc_ifid_o = pa_pc_ifid;
+	assign wash_idex_o = wash_idex;
+	assign wash_ifid_o = wash_ifid;
+	assign pa_idexmemwr_o = pa_idexmemwr;
+	assign wash_exmem_o = wash_exmem;
+	assign wash_memwr_o = wash_memwr;
 endmodule

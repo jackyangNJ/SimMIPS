@@ -45,6 +45,7 @@
 
 /* instruction */
 //OP字段常量
+`define OP_REGIMM  	(6'b000001)
 `define OP_J  		(6'b000010)
 `define OP_JAL 		(6'b000011)
 `define OP_BEQ  	(6'b000100)
@@ -61,7 +62,6 @@
 `define OP_COP0  	(6'b010000)
 `define OP_SPECIAL  (6'b000000)
 `define OP_SPECIAL2 (6'b011100)
-`define OP_REGIMM  	(6'b000001)
 `define OP_LUI 		(6'b001111)
 `define OP_LB  		(6'b100000)
 `define OP_LBU 		(6'b100100)

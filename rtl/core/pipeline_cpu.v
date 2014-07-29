@@ -1,75 +1,159 @@
 module pipeline_cpu(
-	ext_pause,
-	intr,
-	clk,
-	reset,
-	dm_dat_o,
-	im_dat_i,
-	dm_bytesel_o,
-	dm_extsigned_o,
-	dm_en_o,
-	dm_wr_o,
-	overflow,
-	dm_adr_o,
-	dm_dat_i,
-	im_adr_o
+	input clk,
+	input reset,
+
+	output [31:0] dphy_addr_o,
+	output [31:0] iphy_addr_o,
+	output [31:0] data_o,
+	output        data_wr_o,
+	output [3:0] data_bytesel_o,
+	
+	output       ibus_memory_en_o,
+	input        ibus_memory_data_ready_i,
+	input [31:0] ibus_memory_data_i,
+	output       dbus_memory_en_o,
+	input [31:0] dbus_memory_data_i,
+	input        dbus_memory_data_ready_i,
+	output       dbus_peripheral_en_o,
+	input [31:0] dbus_peripheral_data_i,
+	input        dbus_peripheral_data_ready_i,
+	output       icache_en_o,
+	input        icache_data_ready_i,
+	input [31:0] icache_data_i,
+	output       dcache_en_o,
+	input        dcache_data_ready_i,
+	input [31:0] dcache_data_i,
+	
+	
+	input  hw_interrupt0_i,
+	input  hw_interrupt1_i,
+	input  hw_interrupt2_i,
+	input  hw_interrupt3_i,
+	input  hw_interrupt4_i,
+	input  hw_interrupt5_i
 );
 
-
-input wire	ext_pause;
-input wire	intr;
-input wire	clk;
-input wire	reset;
-output wire	[31:0] dm_dat_o;
-input wire	[31:0] im_dat_i;
-output wire [3:0] dm_bytesel_o;
-output wire dm_extsigned_o;
-output wire	dm_en_o;
-output wire	dm_wr_o;
-output wire	overflow;
-output wire	[31:0] dm_adr_o;
-input wire	[31:0] dm_dat_i;
-output wire	[31:0] im_adr_o;
 
 /**
  *  signals
  *
  */
-///////////////////////////if stage////////////////////////////////////
+	
+ //////////////////////////Whole stage/////////////////////////////////
+	/* MMU */
+	wire [31:0] mmu_instruction_o,mmu_dm_data_o;
+	wire mmu_cpu_pause_o;
+	wire mmu_exception_addr_error_o,mmu_exception_tlb_refill_o;
+	wire mmu_exception_tlb_mod_o,mmu_exception_tlb_invalid_o;
+	wire mmu_exception_tlb_rw_o,mmu_exception_tlb_by_instr_o;
+	wire [3:0] tlb_entryhi_match_index_o;
+	wire tlb_entryhi_hit_o;
+	wire [31:0] tlb_entryhi_o,tlb_entrylo0_o,tlb_entrylo1_o;
+	wire tlb_entryhi_data_valid_o,tlb_entrylo0_data_valid_o,tlb_entrylo1_data_valid_o;
+	wire [31:0] mmu_bad_vaddr_o;
+	
+	/* CU */
+	wire pa_pc_ifid_o;
+	wire wash_ifid_o;
+	wire pa_idexmemwr_o;
+	wire wash_idex_o;
+	wire wash_exmem_o;
+	wire wash_memwr_o;
+	
+	/* FU */
+	wire[1:0] id_a_sel;
+	wire[1:0] id_b_sel;
+	
+ //////////////////////////////////////////////////////////////////////
+	wire[31:0] next_pc;
+	wire[31:0] vector_base_addr;
+///////////////////////////If stage////////////////////////////////////
+	/*BPU*/
+	wire[4:0]  if_bpu_index;
+	wire[31:0] if_bpu_pc;
+	
+	wire[31:0] if_pc_out;
+	wire[31:0] if_pc_4_out;
+	wire[31:0] if_new_pc;
+	
 ///////////////////////////////////////////////////////////////////////
+	/*IFID Register*/
+	wire[31:0] id_pc_4_out;
+	wire[31:0] id_jaddr_out;
+	wire[31:0] id_bpu_pc;
+	wire[4:0]  id_bpu_index;
+	wire[31:0] id_instr;
+	wire[15:0] id_imm;
+	wire[31:0] id_pc_out;
+	wire[4:0]  id_shamt;
+	wire[4:0]  id_rs_addr;
+	wire[4:0]  id_rt_addr;
+	wire[4:0]  id_rd_addr;
 ///////////////////////////id stage////////////////////////////////////
-wire[3:0] 	id_compare;
-wire[3:0] 	id_mdu_op;
-wire		id_regwr;
-wire		id_memtoreg;
-wire		id_memwr;
-wire		id_alu_b_sel;
-wire		id_dmen;
-wire		id_of_ctrl;
-wire[1:0] 	id_shift_op;
-wire[3:0] 	id_alu_op;
-wire		epc_sel;
-wire[2:0]	id_ex_result_sel;
-wire[1:0] 	id_bpu_wen;
-wire		id_ext_top;
-wire		id_pc_sel;
-wire		id_shift_sel;
-wire[1:0] 	id_a_sel;
-wire[31:0] 	id_rt_out;
-wire[1:0] 	id_b_sel;
-wire[31:0] 	id_a;
-wire[31:0] 	id_b;
-wire[1:0]	id_regdst;
-wire[4:0] 	id_rd_addr;
-wire		id_cp0_in_sel;
-wire		status_shift_sel;
-wire[31:0] 	id_bpu_pc;
-wire[31:0] 	id_br_addr;
+
+	/* ID */
+	wire[31:0] id_br_addr;
+	
+	wire       id_pc_sel;
+	wire       id_regwr;
+	wire       id_dmen;
+	wire       id_memtoreg;
+	wire       id_memwr;
+	wire[3:0]  id_mem_bytesel_o;
+	wire       id_mem_extsigned_o;
+	wire       id_alu_b_sel;
+	wire       id_shift_sel;
+	wire       id_ext_top;
+	wire[1:0]  id_regdst;
+	wire[1:0]  epc_sel;
+	wire       id_of_ctrl;
+	wire[3:0]  id_alu_op;
+	wire[3:0]  id_mdu_op;
+	wire[1:0]  id_bpu_wen;
+	wire[1:0]  id_bra_addr_sel;
+	wire[2:0]  id_ex_result_sel;
+	wire[1:0]  id_shift_op;
+	wire[1:0]  selpc;
+	wire        instr_ERET_o;
+	wire        exception_syscall_o;
+	wire        cp0_wen_o;
+	wire[4:0]   cp0_addr_o;
+	wire        instr_tlbp_o,instr_tlbr_o,instr_tlbwr_o,instr_tlbwi_o;
+	
+	/* CP0 */
+	wire cp0_interrupt_o;
+	wire [31:0] cp0_data_o;
+	wire [31:0] cp0_epc_o;
+	wire [31:0] cp0_config_o;
+	wire [31:0] cp0_status_o;
+	wire [31:0] cp0_random_o;
+	wire [31:0] cp0_index_o;
+	wire [31:0] cp0_entryhi_o;
+	wire [31:0] cp0_entrylo0_o;
+	wire [31:0] cp0_entrylo1_o;
+	wire cp0_exception_tlb_o,cp0_exception_tlb_byinstr_o;
+	
+	/* GPRs */
+	wire[31:0] id_rs_out;
+	wire[31:0] id_rt_out;
+	
+	/*id_a,id_b sel out */
+	wire[31:0] id_a;
+	wire[31:0] id_b;
+
+	/*branch adder*/
+	wire[31:0] id_bra_imm;
+	wire[31:0] 	id_bra_addr;
+	/* other */
+	wire[4:0] id_regdst_addr;
+	wire[4:0] id_shift_amount;
+	wire[31:0] id_imm_ext;
+	wire[3:0]  id_compare;
+	wire[31:0] epc_in;
+
 ///////////////////////////////////////////////////////////////////////
-///////////////////////////ex stage////////////////////////////////////
-//MDU signals
 wire[3:0] 	ex_mdu_op;
-wire 		mdu_pipeline_stall;
+
 wire[31:0] 	ex_mdu_data;
 wire[31:0] 	ex_b;
 wire[4:0] 	ex_shift_amount;
@@ -85,83 +169,49 @@ wire[31:0] 	ex_cp0_out;
 wire[2:0] 	ex_result_sel;
 wire[31:0]	ex_return_addr;
 wire[31:0]  ex_pc;
-///////////////////////////////////////////////////////////////////////
-///////////////////////////mem stage////////////////////////////////////
-wire [31:0] mem_pc;
-///////////////////////////////////////////////////////////////////////
-///////////////////////////wr stage////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////
-wire		cu_intr;
-
-
-wire[31:0] 	id_instr;
-wire[31:0] 	cp0_reg_status;
-wire		pa_pc_ifid;
-wire[31:0] 	next_pc;
-wire[31:0] 	if_new_pc;
-wire[31:0] 	cp0_epc_out;
-wire[31:0] 	vector_base_addr;
-wire[1:0] 	selpc;
-wire[31:0] 	id_pc_4_out;
-wire[31:0] 	id_bra_addr;
-wire[31:0] 	id_rs_out;
-wire[31:0] 	id_jaddr_out;
-wire[1:0] 	id_bra_addr_sel;
-wire		wr_regwr;
-wire[4:0] 	rs_l;
-wire[4:0] 	id_rt_addr;
-wire[31:0]	wr_data;
-wire[4:0] 	wr_regdst_addr;
-wire[31:0] 	ex_result;
-wire[31:0] 	mem_data;
-
-wire[31:0]	cp0_cause_in;
-wire[2:0] 	cp0_wen;
-wire[31:0] 	epc_in;
-wire[1:0] 	id_cp0_out_sel;
+wire[3:0] ex_mem_bytesel_o;
+wire ex_mem_extsigned_o;
 wire		ex_memtoreg;
-wire		id_bpu_wen_h;
 wire[4:0] 	ex_regdst_addr;
-wire		pa_idexmemwr;
-wire		wash_idex;
-
-
-wire	[31:0] id_cp0_out;
-wire	[31:0] id_imm_ext;
-wire	[4:0] id_regdst_addr;
-wire	[4:0] id_shift_amount;
-wire	[31:0] if_pc_out;
-
 wire	ex_of_ctrl;
 wire	ex_alu_of;
 wire	ex_regwr;
 wire	ex_memwr;
 wire	ex_dmen;
+///////////////////////////ex stage////////////////////////////////////
+	wire[31:0] 	ex_result;
+	/*MDU*/
+	wire mdu_pipeline_stall;
+///////////////////////////////////////////////////////////////////////
 wire	mem_regwr;
 wire	[4:0] mem_regdst_addr;
 wire	mem_memtoreg;
-wire	[31:0] mem_result;
+
+wire[3:0] mem_bytesel_o;
+wire mem_extsigned_o;
+wire dm_en_o,dm_wr_o;
+wire[31:0] dm_adr_o,dm_dat_o;
+wire[31:0] mem_result;
+///////////////////////////mem stage////////////////////////////////////
+wire [31:0] mem_pc_o;
+wire[31:0]  mem_data;
+///////////////////////////////////////////////////////////////////////
+
+wire		wr_regwr;
+wire[31:0]	wr_data;
+wire[4:0] 	wr_regdst_addr;
+///////////////////////////wr stage////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////
+
+
+wire[4:0] 	rs_l;
+
+wire		id_bpu_wen_h;
 wire	[31:0] const_4;
-wire	[15:0] id_imm;
-wire	[4:0] id_bpu_index;
-wire	[31:0] if_pc_4_out;
-wire	wash_ifid;
-wire	[4:0] if_bpu_index;
-wire	[31:0] if_bpu_pc;
-wire	[31:0] id_pc_out;
-wire	[31:0] id_bra_imm;
-wire	[4:0] id_shamt;
-wire	[4:0] id_rs_addr;
+wire pause = mmu_cpu_pause_o | mdu_pipeline_stall;
 
-wire pause = ext_pause | mdu_pipeline_stall;
-assign	dm_adr_o = mem_result;
-assign	im_adr_o = if_pc_out;
-assign	overflow = ex_of_ctrl & ex_alu_of;
-
-
-
-
+wire	overflow = ex_of_ctrl & ex_alu_of;
 
 Multi_4_32	id_br_addr_sel(
 	.a(id_pc_4_out),
@@ -172,79 +222,23 @@ Multi_4_32	id_br_addr_sel(
 	.data(id_br_addr));
 
 
-GPRs	b2v_inst11(
-	.clk(clk),
-	.wr_regwr(wr_regwr),
-	.id_rs_addr(id_rs_addr),
-	.id_rt_addr(id_rt_addr),
-	.wr_data(wr_data),
-	.wr_regdst_addr(wr_regdst_addr),
-	.id_rs_out(id_rs_out),
-	.id_rt_out(id_rt_out));
-	
-
-
-
-CP0	b2v_inst17(
-	.clk(clk),
-	.reset(reset),
-	.pause(pause),
-	.id_cp0_in_sel(id_cp0_in_sel),
-	.status_shift_sel(status_shift_sel),
-	.cause_in(cp0_cause_in),
-	.cp0_wen(cp0_wen),
-	.epc_in(epc_in),
-	.id_b(id_b),
-	.id_cp0_out_sel(id_cp0_out_sel),
-	.epc_out(cp0_epc_out),
-	.id_cp0_out(id_cp0_out),
-	.status_out(cp0_reg_status));
-
-
 CU	b2v_inst18(
 	.pause(pause),
-	.intr(intr),
+	.id_instr(id_instr),
 	.ex_memtoreg(ex_memtoreg),
 	.id_bpu_wen_h(id_bpu_wen_h),
 	.ex_regdst_addr(ex_regdst_addr),
-	.id_instr(id_instr),
-	.status_out(cp0_reg_status),
-	.pa_pc_ifid(pa_pc_ifid),
-	.wash_ifid(wash_ifid),
-	.pa_idexmemwr(pa_idexmemwr),
-	.wash_idex(wash_idex),
-	.cu_intr(cu_intr));
-
-
-
-
-
-Multi_2_32	epc_in_selector(
-	.sel(epc_sel),
-	.a(if_pc_out),
-	.b(if_new_pc),
-	.data(epc_in));
-
-
-
-
-
-
-
-
-Multi_2_32	b2v_inst29(
-	.sel(mem_memtoreg),
-	.a(mem_result),
-	.b(dm_dat_i),
-	.data(mem_data));
-
-
-Adder	b2v_inst3(
-	.a(const_4),
-	.b(if_pc_out),
-	.result(if_pc_4_out));
-
-
+	.pa_pc_ifid_o(pa_pc_ifid_o),
+	.wash_ifid_o(wash_ifid_o),
+	.pa_idexmemwr_o(pa_idexmemwr_o),
+	.wash_idex_o(wash_idex_o),
+	.wash_exmem_o(wash_exmem_o),
+	.wash_memwr_o(wash_memwr_o),
+	.cp0_interrupt_i(cp0_interrupt_o),
+	.cp0_exception_tlb_i(cp0_exception_tlb_o),
+	.cp0_exception_tlb_byinstr_i(cp0_exception_tlb_byinstr_o)
+	);
+	
 FU	b2v_inst30(
 	.ex_regwr(ex_regwr),
 	.mem_regwr(mem_regwr),
@@ -255,6 +249,92 @@ FU	b2v_inst30(
 	.wr_regdst_addr(wr_regdst_addr),
 	.id_a_sel(id_a_sel),
 	.id_b_sel(id_b_sel));
+
+MMU mmu(
+	.clk_i(clk),
+	.rst_i(reset),
+	.ivirtual_addr_i(if_pc_out),
+	.dvirtual_addr_i(dm_adr_o),
+	//connected with cache and bus
+	.dphy_addr_o(dphy_addr_o),
+	.iphy_addr_o(iphy_addr_o),
+	.data_o(data_o),
+	.data_wr_o(data_wr_o),
+	.data_bytesel_o(data_bytesel_o),
+	//TLB instructions 
+	.instr_tlbp_i(instr_tlbp_o),
+	.instr_tlbr_i(instr_tlbr_o),
+	.instr_tlbwr_i(instr_tlbwr_o),
+	.instr_tlbwi_i(instr_tlbwi_o),
+	//CP0 registers data input
+	.cp0_entryhi_i(cp0_entryhi_o),
+	.cp0_entrylo0_i(cp0_entrylo0_o),
+	.cp0_entrylo1_i(cp0_entrylo1_o),
+	.cp0_random_i(cp0_random_o),
+	.cp0_status_i(cp0_status_o),
+	.cp0_index_i(cp0_index_o),
+	.cp0_config_i(cp0_config_o),
+	
+	//connected with BUS	
+	.ibus_memory_en_o(ibus_memory_en_o),
+	.ibus_memory_data_ready_i(ibus_memory_data_ready_i),
+	.ibus_memory_data_i(ibus_memory_data_i),
+	.dbus_memory_en_o(dbus_memory_en_o),
+	.dbus_memory_data_ready_i(dbus_memory_data_ready_i),
+	.dbus_memory_data_i(dbus_memory_data_i),
+	.dbus_peripheral_en_o(dbus_peripheral_en_o),
+	.dbus_peripheral_data_ready_i(dbus_peripheral_data_ready_i),
+	.dbus_peripheral_data_i(dbus_peripheral_data_i),
+	
+	//connected with CACHE
+	.icache_en_o(icache_en_o),
+	.dcache_en_o(dcache_en_o),
+	.icache_data_ready_i(icache_data_ready_i),
+	.icache_data_i(icache_data_i),
+	.dcache_data_ready_i(dcache_data_ready_i),
+	.dcache_data_i(dcache_data_i),
+	
+	//connected with CPU core
+	.dm_en_i(dm_en_o),
+	.dm_data_i(dm_dat_o),
+	.dm_wr_i(dm_wr_o),
+	.dm_bytesel_i(mem_bytesel_o),
+	.dm_extsigned_i(mem_extsigned_o),
+	.dm_data_o(mmu_dm_data_o),
+	
+	.instruction_o(mmu_instruction_o), 
+	.cpu_pause_o(mmu_cpu_pause_o), //**
+	.exception_addr_error_o(mmu_exception_addr_error_o),
+	.exception_tlb_refill_o(mmu_exception_tlb_refill_o),
+	.exception_tlb_mod_o(mmu_exception_tlb_mod_o),
+	.exception_tlb_invalid_o(mmu_exception_tlb_invalid_o),
+	.exception_tlb_rw_o(mmu_exception_tlb_rw_o),
+	.exception_tlb_by_instr_o(mmu_exception_tlb_by_instr_o),
+	/* to CP0 registers */
+	.tlb_entryhi_match_index_o(tlb_entryhi_match_index_o),
+	.tlb_entryhi_hit_o(tlb_entryhi_hit_o),
+	.tlb_entryhi_o(tlb_entryhi_o),
+	.tlb_entrylo0_o(tlb_entrylo0_o),
+	.tlb_entrylo1_o(tlb_entrylo1_o),
+	.tlb_entryhi_data_valid_o(tlb_entryhi_data_valid_o),
+	.tlb_entrylo0_data_valid_o(tlb_entrylo0_data_valid_o),
+	.tlb_entrylo1_data_valid_o(tlb_entrylo1_data_valid_o),
+	.bad_vaddr_o(mmu_bad_vaddr_o)
+);
+
+
+
+
+
+
+
+
+Adder	b2v_inst3(
+	.a(const_4),
+	.b(if_pc_out),
+	.result(if_pc_4_out));
+
+
 
 
 const_4	b2v_inst31(
@@ -279,15 +359,15 @@ Section_rs	b2v_inst34(
 	
 Multi_3_32	next_pc_sel(
 	.a(if_new_pc),
-	.b(cp0_epc_out),
+	.b(cp0_epc_o),
 	.c(vector_base_addr),
 	.sel(selpc),
 	.data(next_pc));	
 	
-PC_register	b2v_inst0(
+PC_register b2v_inst0(
 	.clk(clk),
 	.reset(reset),
-	.pa_pc_ifid(pa_pc_ifid),
+	.pa_pc_ifid(pa_pc_ifid_o),
 	.next_pc(next_pc),
 	.if_pc_out(if_pc_out));
 
@@ -312,11 +392,11 @@ BPU	bpu_inst(
 IFID_register	ifid_regs(
 	.clk(clk),
 	.reset(reset),
-	.pa_pc_ifid(pa_pc_ifid),
-	.wash_ifid(wash_ifid),
+	.pa_pc_ifid(pa_pc_ifid_o),
+	.wash_ifid(wash_ifid_o),
 	.if_bpu_index(if_bpu_index),
 	.if_bpu_pc(if_bpu_pc),
-	.if_instr_out(im_dat_i),
+	.if_instr_out(mmu_instruction_o),
 	.if_pc_4_out(if_pc_4_out),
 	.if_pc_out(if_pc_out),
 	.id_bpu_index(id_bpu_index),
@@ -337,38 +417,104 @@ Compare	b2v_inst14(
 	.id_compare(id_compare));
 
 ID	instr_decode(
-	.cu_intr(cu_intr),
 	.id_bpu_pc(id_bpu_pc),
 	.id_br_addr(id_br_addr),
 	.id_compare(id_compare),
 	.id_instr(id_instr),
-	.status_out(cp0_reg_status),
 	.id_pc_sel(id_pc_sel),
-	.id_dmen(id_dmen),
 	.id_regwr(id_regwr),
+	.id_dmen(id_dmen),
 	.id_memtoreg(id_memtoreg),
 	.id_memwr(id_memwr),
+	.id_mem_extsigned_o(id_mem_extsigned_o),
+	.id_mem_bytesel_o(id_mem_bytesel_o),
 	.id_alu_b_sel(id_alu_b_sel),
 	.id_shift_sel(id_shift_sel),
 	.id_ext_top(id_ext_top),
 	.id_regdst(id_regdst),
-	.id_cp0_in_sel(id_cp0_in_sel),
-	.status_shift_sel(status_shift_sel),
 	.epc_sel(epc_sel),
 	.id_of_ctrl(id_of_ctrl),
-	.cause_in(cp0_cause_in),
-	.cp0_wen(cp0_wen),
 	.id_alu_op(id_alu_op),
 	.mdu_op_o(id_mdu_op),
 	.id_bpu_wen(id_bpu_wen),
 	.id_bra_addr_sel(id_bra_addr_sel),
-	.id_cp0_out_sel(id_cp0_out_sel),
 	.id_ex_result_sel(id_ex_result_sel),
 	.id_shift_op(id_shift_op),
 	.selpc(selpc),
-	.mem_extsigned_o(dm_extsigned_o),
-	.mem_bytesel_o(dm_bytesel_o)	
+	.instr_ERET_o(instr_ERET_o),
+	.exception_syscall_o(exception_syscall_o),
+	.cp0_wen_o(cp0_wen_o),
+	.cp0_addr_o(cp0_addr_o),
+	.cp0_exception_tlb_i(cp0_exception_tlb_o),
+	.cp0_exception_tlb_byinstr_i(cp0_exception_tlb_byinstr_o),
+	.cp0_interrupt_i(cp0_interrupt_o),
+	.instr_tlbp_o(instr_tlbp_o),
+	.instr_tlbr_o(instr_tlbr_o),
+	.instr_tlbwr_o(instr_tlbwr_o),
+	.instr_tlbwi_o(instr_tlbwi_o)
 	);
+
+GPRs	b2v_inst11(
+	.clk(clk),
+	.wr_regwr(wr_regwr),
+	.id_rs_addr(id_rs_addr),
+	.id_rt_addr(id_rt_addr),
+	.wr_data(wr_data),
+	.wr_regdst_addr(wr_regdst_addr),
+	.id_rs_out(id_rs_out),
+	.id_rt_out(id_rt_out));
+	
+CP0	cp0(
+	.clk(clk),
+	.reset(reset),
+	.cpu_pause_i(pause),
+	.cp0_intrrupt_o(cp0_interrupt_o),
+	.cp0_exception_tlb_o(cp0_exception_tlb_o),
+	.cp0_exception_tlb_byinstr_o(cp0_exception_tlb_byinstr_o),
+	.instr_ERET_i(instr_ERET_o),
+	.cp0_wen_i(cp0_wen_o),
+	.cp0_addr_i(cp0_addr_o),
+	.cp0_data_i(id_b),
+	.cp0_data_o(cp0_data_o),
+	.cp0_epc_o(cp0_epc_o),
+	.cp0_config_o(cp0_config_o),
+	.cp0_status_o(cp0_status_o),
+	.cp0_random_o(cp0_random_o),
+	.cp0_index_o(cp0_index_o),
+	.cp0_entryhi_o(cp0_entryhi_o),
+	.cp0_entrylo0_o(cp0_entrylo0_o),
+	.cp0_entrylo1_o(cp0_entrylo1_o),
+	.cp0_epc_i(epc_in),
+	.cp0_entryhi_i(tlb_entryhi_o),
+	.cp0_entryhi_data_valid_i(tlb_entryhi_data_valid_o),
+	.cp0_entrylo0_i(tlb_entrylo0_o),
+	.cp0_entrylo0_data_valid_i(tlb_entrylo0_data_valid_o),
+	.cp0_entrylo1_i(tlb_entrylo1_o),
+	.cp0_entrylo1_data_valid_i(tlb_entrylo1_data_valid_o),
+	.tlb_entryhi_match_index_i(tlb_entryhi_match_index_o),
+	.tlb_entryhi_hit_i(tlb_entryhi_hit_o),
+	.cp0_bad_vaddr_i(mmu_bad_vaddr_o),
+	.exception_tlb_by_instr_i(mmu_exception_tlb_by_instr_o),
+	.exception_addr_error_i(mmu_exception_addr_error_o),
+	.exception_tlb_refill_i(mmu_exception_tlb_refill_o),
+	.exception_tlb_mod_i(mmu_exception_tlb_mod_o),
+	.exception_tlb_invalid_i(mmu_exception_tlb_invalid_o),
+	.exception_tlb_rw_i(mmu_exception_tlb_rw_o),
+	.exception_syscall_i(exception_syscall_o),
+	.hw_interrupt0_i(hw_interrupt0_i),
+	.hw_interrupt1_i(hw_interrupt1_i),
+	.hw_interrupt2_i(hw_interrupt2_i),
+	.hw_interrupt3_i(hw_interrupt3_i),
+	.hw_interrupt4_i(hw_interrupt4_i),
+	.hw_interrupt5_i(hw_interrupt5_i)
+	);
+
+	Multi_3_32	epc_in_selector(
+	.sel(epc_sel),
+	.a(if_pc_out),
+	.b(if_new_pc),
+	.c(mem_pc_o),
+	.data(epc_in));
 
 Multi_4_32	id_a_selector(
 	.a(id_rs_out),
@@ -403,13 +549,15 @@ Imm_Ext	b2v_inst35(
 IDEx_register	b2v_inst19(
 	.clk(clk),
 	.reset(reset),
-	.pa_idexmemwr(pa_idexmemwr),
-	.wash_idex(wash_idex),
+	.pa_idexmemwr(pa_idexmemwr_o),
+	.wash_idex(wash_idex_o),
 	.return_addr_i(id_pc_4_out),
 	.id_pc_i(if_pc_out),
 	.id_regwr(id_regwr),
 	.id_memtoreg(id_memtoreg),
 	.id_memwr(id_memwr),
+	.id_mem_bytesel_i(id_mem_bytesel_o),
+	.id_mem_extsigned_i(id_mem_extsigned_o),
 	.id_alu_b_sel(id_alu_b_sel),
 	.id_dmen(id_dmen),
 	.id_of_ctrl(id_of_ctrl),
@@ -417,7 +565,7 @@ IDEx_register	b2v_inst19(
 	.id_alu_op(id_alu_op),
 	.mdu_op_i(id_mdu_op),
 	.id_b(id_b),
-	.id_cp0_out(id_cp0_out),
+	.id_cp0_out(cp0_data_o),
 	.id_ex_result_sel(id_ex_result_sel),
 	.id_imm_ext(id_imm_ext),
 	.id_regdst_addr(id_regdst_addr),
@@ -427,6 +575,8 @@ IDEx_register	b2v_inst19(
 	.ex_memtoreg(ex_memtoreg),
 	.ex_memwr(ex_memwr),
 	.ex_dmen(ex_dmen),
+	.ex_mem_bytesel_o(ex_mem_bytesel_o),
+	.ex_mem_extsigned_o(ex_mem_extsigned_o),
 	.ex_of_ctrl(ex_of_ctrl),
 	.ex_alu_b_sel(ex_alu_b_sel),
 	.ex_a(ex_a),
@@ -488,30 +638,42 @@ Multi_6_32	ex_result_selector(
 ExMem_register	b2v_inst26(
 	.clk(clk),
 	.reset(reset),
-	.pa_idexmemwr(pa_idexmemwr),
+	.pa_idexmemwr(pa_idexmemwr_o),
+	.wash_exmem_i(wash_exmem_o),
 	.ex_pc_i(ex_pc),
 	.ex_regwr(ex_regwr),
 	.ex_memtoreg(ex_memtoreg),
 	.ex_memwr(ex_memwr),
 	.ex_dmen(ex_dmen),
+	.ex_mem_bytesel_i(ex_mem_bytesel_o),
+	.ex_mem_extsigned_i(ex_mem_extsigned_o),
 	.ex_b(ex_b),
 	.ex_regdst_addr(ex_regdst_addr),
 	.ex_result(ex_result),
-	.mem_pc_o(mem_pc),
+	.mem_pc_o(mem_pc_o),
 	.mem_regwr(mem_regwr),
-	.mem_dmen(dm_en_o),
 	.mem_memtoreg(mem_memtoreg),
+	.mem_dmen(dm_en_o),
 	.mem_memwr(dm_wr_o),
-	.mem_regdst_addr(mem_regdst_addr),
+	.mem_bytesel_o(mem_bytesel_o),
+	.mem_extsigned_o(mem_extsigned_o),
 	.mem_result(mem_result),
+	.mem_regdst_addr(mem_regdst_addr),
 	.mem_rt(dm_dat_o));
 
 //////////////////////////////Mem Stage///////////////////////////////////////
+assign dm_adr_o = mem_result;
+Multi_2_32	mem_data_selector(
+	.sel(mem_memtoreg),
+	.a(mem_result),
+	.b(mmu_dm_data_o),
+	.data(mem_data));
 //////////////////////////////////////////////////////////////////////////////
 MemWr_register	b2v_inst27(
 	.clk(clk),
 	.reset(reset),
-	.pa_idexmemwr(pa_idexmemwr),
+	.pa_idexmemwr(pa_idexmemwr_o),
+	.wash_memwr_i(wash_memwr_o),
 	.mem_regwr(mem_regwr),
 	.mem_data(mem_data),
 	.mem_regdst_addr(mem_regdst_addr),
@@ -546,3 +708,4 @@ Multi_2_5	id_shift_amount_sel(
 
 
 endmodule
+

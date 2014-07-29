@@ -3,14 +3,16 @@ module CP0(
 	input clk,
 	input reset,
 	input cpu_pause_i,
+	output cp0_intrrupt_o,
+	output cp0_exception_tlb_byinstr_o,
+	output cp0_exception_tlb_o,
 	/* specified instruction available state */
 	input instr_ERET_i,
 	/* normal r/w interface */
 	input         cp0_wen_i,
-	input [31:0]  cp0_addr_i,
+	input [4:0]   cp0_addr_i,
 	input [31:0]  cp0_data_i,
 	output [31:0] cp0_data_o,
-	
 	/* cp0 data out */
 	output [31:0] cp0_epc_o,
 	output [31:0] cp0_status_o,
@@ -32,8 +34,9 @@ module CP0(
 	/* tlb signal */
 	input [3:0]   tlb_entryhi_match_index_i,
 	input         tlb_entryhi_hit_i,
-	input [31:0]  bad_vaddr_i,
+	input [31:0]  cp0_bad_vaddr_i,
 	/* exceptions */
+	input         exception_tlb_by_instr_i,
 	input         exception_addr_error_i,
 	input         exception_tlb_refill_i,
 	input         exception_tlb_mod_i,
@@ -88,7 +91,7 @@ module CP0(
 	wire cp0_config_m = 1'b1;
 	wire cp0_config_be = 1'b0; //little endian
 	wire [2:0] cp0_config_mt = 3'd1;
-	wire [2:0] cp0_config_k0 = 3'd2;
+	wire [2:0] cp0_config_k0 = 3'd2; //no cache
 	
 	/* CP0 Index */
 	always@(posedge clk)
@@ -139,7 +142,7 @@ module CP0(
 	begin		
 		if(!cpu_pause_i)
 			begin
-				cp0_bad_vaddr <= bad_vaddr_i;
+				cp0_bad_vaddr <= cp0_bad_vaddr_i;
 			end
 	end
 	
@@ -162,7 +165,7 @@ module CP0(
 						cp0_entrylo1 <= cp0_entrylo0_i[25:0];
 				//entryhi
 				if(exception_tlb_invalid_i || exception_tlb_mod_i || exception_tlb_refill_i)
-					cp0_entryhi_vpn2 <= bad_vaddr_i[31:13];
+					cp0_entryhi_vpn2 <= cp0_bad_vaddr_i[31:13];
 				else
 					if(cp0_wen_i && cp0_addr_i == `CP0_ENTRYHI_ADDR)
 						{cp0_entryhi_vpn2,cp0_entryhi_asid} <= {cp0_data_i[31:13],cp0_data_i[7:0]};
@@ -290,4 +293,7 @@ module CP0(
 	assign cp0_random_o = {28'b0,cp0_random};
 	assign cp0_config_o = {cp0_config_m,15'b0,cp0_config_be,5'b0,cp0_config_mt,4'b0,cp0_config_k0};
 	
+	assign cp0_intrrupt_o = intr_occur;
+	assign cp0_exception_tlb_byinstr_o = exception_tlb_by_instr_i;
+	assign cp0_exception_tlb_o = exc_tlb_occur;
 endmodule

@@ -22,7 +22,7 @@ module IFID_register(
 );
 
 	reg [31:0]I_bpu_pc;
-	reg [4:0]I_bpu_index;
+	reg [4:0] I_bpu_index;
 	reg [31:0]I_pc_4_out;
 	reg [31:0]I_instr_out;
 	reg [31:0]I_pc_out;

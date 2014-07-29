@@ -23,24 +23,24 @@ module MMU(
 	input [31:0] cp0_index_i,
 	input [31:0] cp0_config_i,
 	
-	//connected with BUS	
+	//connected with BUS
 	output ibus_memory_en_o,
 	input  ibus_memory_data_ready_i,
-	input  ibus_memory_data_i,
+	input [31:0] ibus_memory_data_i,
 	output dbus_memory_en_o,
 	input  dbus_memory_data_ready_i,
-	output dbus_memory_data_i,
+	input [31:0]dbus_memory_data_i,
 	output dbus_peripheral_en_o,
 	input  dbus_peripheral_data_ready_i,
-	input  dbus_peripheral_data_i,
+	input[31:0]  dbus_peripheral_data_i,
 	
 	//connected with CACHE
 	output icache_en_o,
 	output dcache_en_o,
 	input  icache_data_ready_i,
-	input  ichache_data_i,
+	input [31:0] icache_data_i,
 	input  dcache_data_ready_i,
-	input  dchache_data_i,
+	input [31:0]dcache_data_i,
 	
 	//connected with CPU core
 	input         dm_en_i,
@@ -55,7 +55,8 @@ module MMU(
 	output        exception_tlb_refill_o,
 	output        exception_tlb_mod_o,
 	output        exception_tlb_invalid_o,
-	output        exception_tlb_rw_o, //**
+	output        exception_tlb_rw_o,
+	output        exception_tlb_by_instr_o,
 	/* to CP0 registers */
 	output [3:0]  tlb_entryhi_match_index_o,
 	output        tlb_entryhi_hit_o,
@@ -64,8 +65,8 @@ module MMU(
 	output [31:0] tlb_entrylo1_o,
 	output        tlb_entryhi_data_valid_o,
 	output        tlb_entrylo0_data_valid_o,
-	output        tlb_entrylo1_data_valid_o
-	output [31:0] bad_vaddr_o,
+	output        tlb_entrylo1_data_valid_o,
+	output [31:0] bad_vaddr_o
 );
 
 /* Constants */
@@ -100,7 +101,7 @@ begin
 	iexception_addr_error = 0;
 	iexception_tlb_invalid = 0;
 	iexception_tlb_refill = 0;
-	
+	iphy_addr = 0;
 	if(cpu_user_mode && ivirtual_addr_i[31])
 		iexception_addr_error = 1'b1;
 	else
@@ -205,14 +206,14 @@ begin
 	dm_data = 0;
 	//instruction
 	if(icache_en)
-		instruction = ichache_data_i;
+		instruction = icache_data_i;
 	else
 		if(ibus_memory_en)
 			instruction = ibus_memory_data_i;
 			
 	//data
 	if(dcache_en)
-		dm_data = dchache_data_i;
+		dm_data = dcache_data_i;
 	else 	
 		if(dbus_memory_en)
 			dm_data = dbus_memory_data_i;
@@ -280,7 +281,8 @@ assign exception_addr_error_o = iexception_addr_error & dexception_addr_error;
 assign exception_tlb_invalid_o = iexception_tlb_invalid & dexception_tlb_invalid;
 assign exception_tlb_mod_o = dexception_tlb_mod;
 assign exception_tlb_refill_o = iexception_tlb_refill & dexception_tlb_refill;
-assign exception_tlb_rw_o = (iexception_addr_error || iexception_tlb_invalid || iexception_tlb_refill)? 0 : dm_wr_i;
+assign exception_tlb_rw_o = (iexception_addr_error || iexception_tlb_invalid || iexception_tlb_refill)? 1'b0 : dm_wr_i;
+assign exception_tlb_by_instr_o = (iexception_addr_error || iexception_tlb_invalid || iexception_tlb_refill);
 //to cp0
 assign tlb_entryhi_data_valid_o = instr_tlbr_i ? 1'b1 : 1'b0;
 assign tlb_entrylo0_data_valid_o = instr_tlbr_i ? 1'b1 : 1'b0;
