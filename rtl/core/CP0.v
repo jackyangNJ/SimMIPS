@@ -51,20 +51,7 @@ module CP0(
 	input         hw_interrupt5_i
 	
 );
-/* Constants */
-	/* interrupts occur */
-	wire interrupt0 = hw_interrupt0_i && cp0_status_im[0];
-	wire interrupt1 = hw_interrupt1_i && cp0_status_im[1];
-	wire interrupt2 = hw_interrupt2_i && cp0_status_im[2];
-	wire interrupt3 = hw_interrupt3_i && cp0_status_im[3];
-	wire interrupt4 = hw_interrupt4_i && cp0_status_im[4];
-	wire interrupt5 = hw_interrupt5_i && cp0_status_im[5];
-	wire intr_occur = (interrupt0 || interrupt1 || interrupt2 || interrupt3 ||interrupt4 || interrupt5)
-						&& (!cp0_status_exl) && cp0_status_ie;
-	/* exception occur*/
-	wire exc_tlb_occur = exception_addr_error_i || exception_tlb_invalid_i || exception_tlb_mod_i || exception_tlb_refill_i;
-	wire exc_occur = intr_occur || exception_syscall_i || exc_tlb_occur;
-	
+
 /* CP0 Registers */
 	reg [31:0] cp0_epc;
 	// CP0 Index
@@ -92,7 +79,20 @@ module CP0(
 	wire cp0_config_be = 1'b0; //little endian
 	wire [2:0] cp0_config_mt = 3'd1;
 	wire [2:0] cp0_config_k0 = 3'd2; //no cache
-	
+/* Constants */
+	/* interrupts occur */
+	wire interrupt0 = hw_interrupt0_i && cp0_status_im[0];
+	wire interrupt1 = hw_interrupt1_i && cp0_status_im[1];
+	wire interrupt2 = hw_interrupt2_i && cp0_status_im[2];
+	wire interrupt3 = hw_interrupt3_i && cp0_status_im[3];
+	wire interrupt4 = hw_interrupt4_i && cp0_status_im[4];
+	wire interrupt5 = hw_interrupt5_i && cp0_status_im[5];
+	wire intr_occur = (interrupt0 || interrupt1 || interrupt2 || interrupt3 ||interrupt4 || interrupt5)
+						&& (!cp0_status_exl) && cp0_status_ie;
+	/* exception occur*/
+	wire exc_tlb_occur = exception_addr_error_i || exception_tlb_invalid_i || exception_tlb_mod_i || exception_tlb_refill_i;
+	wire exc_occur = intr_occur || exception_syscall_i || exc_tlb_occur;
+		
 	/* CP0 Index */
 	always@(posedge clk)
 	begin

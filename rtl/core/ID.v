@@ -235,7 +235,7 @@ module ID(
 	
 	//mtc0,mfc0
 	assign cp0_wen_o = instr_MTC0 ? 1'b1 : 1'b0;
-	assign cp0_addr_o = instr_MFC0 ? instr_rd : instr_rt;
+	assign cp0_addr_o = instr_rd;
 	/* CP0 */
 	//MMU
 	assign instr_tlbp_o  = instr_TLBP;

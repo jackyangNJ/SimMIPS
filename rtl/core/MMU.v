@@ -151,7 +151,7 @@ begin
 	dexception_tlb_invalid = 0;
 	dexception_tlb_refill = 0;
 	dexception_tlb_mod = 0;
-	dphy_addr =0;
+	dphy_addr = 0;
 	if(dm_en_i)
 		begin
 			if(cpu_user_mode && ivirtual_addr_i[31])
@@ -277,10 +277,10 @@ assign dbus_peripheral_en_o = dbus_peripheral_en;
 
 
 //exception
-assign exception_addr_error_o = iexception_addr_error & dexception_addr_error;
-assign exception_tlb_invalid_o = iexception_tlb_invalid & dexception_tlb_invalid;
+assign exception_addr_error_o = iexception_addr_error || dexception_addr_error;
+assign exception_tlb_invalid_o = iexception_tlb_invalid || dexception_tlb_invalid;
 assign exception_tlb_mod_o = dexception_tlb_mod;
-assign exception_tlb_refill_o = iexception_tlb_refill & dexception_tlb_refill;
+assign exception_tlb_refill_o = iexception_tlb_refill || dexception_tlb_refill;
 assign exception_tlb_rw_o = (iexception_addr_error || iexception_tlb_invalid || iexception_tlb_refill)? 1'b0 : dm_wr_i;
 assign exception_tlb_by_instr_o = (iexception_addr_error || iexception_tlb_invalid || iexception_tlb_refill);
 //to cp0

@@ -49,6 +49,9 @@ module alu_adder (
 	output	  cout;
 	output	[31:0]  result;
 
+	assign{cout,result} = dataa + datab + cin;
+endmodule
+/*
 	wire  sub_wire0;
 	wire [31:0] sub_wire1;
 	wire  cout = sub_wire0;
@@ -125,3 +128,5 @@ endmodule
 // Retrieval info: GEN_FILE: TYPE_NORMAL adder_inst.v FALSE
 // Retrieval info: GEN_FILE: TYPE_NORMAL adder_bb.v TRUE
 // Retrieval info: LIB_FILE: lpm
+
+*/
