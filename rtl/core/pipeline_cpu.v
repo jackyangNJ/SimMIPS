@@ -552,7 +552,7 @@ IDEx_register	b2v_inst19(
 	.pa_idexmemwr(pa_idexmemwr_o),
 	.wash_idex(wash_idex_o),
 	.return_addr_i(id_pc_4_out),
-	.id_pc_i(if_pc_out),
+	.id_pc_i(id_pc_out),
 	.id_regwr(id_regwr),
 	.id_memtoreg(id_memtoreg),
 	.id_memwr(id_memwr),

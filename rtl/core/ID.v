@@ -149,7 +149,7 @@ module ID(
 									(id_instr[31:26]==6'd6 && (id_compare[2] || id_compare[1])) ||
 									(id_instr[31:26]==6'd7 && (!id_compare[2] && !id_compare[1])))) ? 1'b1 : 1'b0;
 	
-	assign selpc = (cp0_interrupt_i || instr_SYSCALL) ? 2'b10 :
+	assign selpc = (cp0_interrupt_i || instr_SYSCALL || cp0_exception_tlb_i) ? 2'b10 :
 										   instr_ERET ? 2'b01 : 2'b0;
 	
 	assign id_dmen = DM_instr ? 1'b1 : 1'b0;

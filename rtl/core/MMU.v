@@ -291,7 +291,10 @@ assign bad_vaddr_o = (iexception_addr_error || iexception_tlb_invalid || iexcept
 //cpu
 assign instruction_o = instruction;
 assign dm_data_o = dm_data;
-assign cpu_pause_o = ~(icache_data_ready_i || ibus_memory_data_ready_i) || 
-					   ~((dm_en_i && (dcache_data_ready_i || dbus_memory_data_ready_i || dbus_peripheral_data_ready_i)) || !dm_en_i);
+
+wire iexception_occur = iexception_addr_error || iexception_tlb_invalid || iexception_tlb_refill;
+wire dexception_occur = dexception_addr_error || dexception_tlb_invalid || dexception_tlb_refill || dexception_tlb_mod;
+assign cpu_pause_o = (!icache_data_ready_i && !ibus_memory_data_ready_i && !iexception_occur) || 
+					   (dm_en_i && !dcache_data_ready_i && !dbus_memory_data_ready_i && !dbus_peripheral_data_ready_i && !dexception_occur );
 
 endmodule

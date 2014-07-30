@@ -157,7 +157,7 @@ module CP0(
 				else
 					if(cp0_entrylo1_data_valid_i)
 						cp0_entrylo0 <= cp0_entrylo0_i[25:0];
-				//entrylo1		
+				//entrylo1
 				if(cp0_wen_i && cp0_addr_i == `CP0_ENTRYLO1_ADDR)
 					cp0_entrylo1 <= cp0_data_i[25:0];
 				else
@@ -171,7 +171,7 @@ module CP0(
 						{cp0_entryhi_vpn2,cp0_entryhi_asid} <= {cp0_data_i[31:13],cp0_data_i[7:0]};
 					else
 						if(cp0_entryhi_data_valid_i)
-							{cp0_entryhi_vpn2,cp0_entryhi_asid} <= {cp0_entryhi_i[31:13],cp0_entryhi_i[7:0]};	
+							{cp0_entryhi_vpn2,cp0_entryhi_asid} <= {cp0_entryhi_i[31:13],cp0_entryhi_i[7:0]};
 			end
 	end
 	
@@ -214,11 +214,11 @@ module CP0(
 									cp0_cause_ip[2] <= interrupt2;
 									cp0_cause_ip[1] <= interrupt1;
 									cp0_cause_ip[0] <= interrupt0;
-								end										
+								end
 							6'b01xxxx:
 								if(exception_tlb_rw_i)
 									cp0_cause_exc_code <= `EXC_AdES;
-								else	
+								else
 									cp0_cause_exc_code <= `EXC_AdEL;
 							6'b001xxx:
 								if(exception_tlb_rw_i)
