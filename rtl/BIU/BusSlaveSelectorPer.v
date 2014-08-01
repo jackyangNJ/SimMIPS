@@ -1,5 +1,5 @@
 `include "BusConfig.v"
-module BusSlaveSelector(
+module BusSlaveSelectorPer(
 	input[31:0] adr_i,
 	input stb_i,
 	output[`SLAVE_NUMBER-1:0]cs_o,

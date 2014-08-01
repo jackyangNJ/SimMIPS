@@ -198,11 +198,6 @@ Bus	b2v_BUS(
 	.slave_4_cs_o(ram_cs),
 	.slave_4_we_o(ram_we),
 	
-	
-	
-	
-	
-	
 	.master_dat_o(bus_dat_o),
 	.slave_0_adr_o(timer_adr),
 	.slave_0_dat_o(timer_dat_o),
@@ -214,7 +209,6 @@ Bus	b2v_BUS(
 	
 	.slave_4_adr_o(ram_adr),
 	.slave_4_dat_o(ram_dat_o),
-	
 	
 	.slave_5_cs_o(sram_cs),
 	.slave_5_we_o(sram_we),
@@ -229,7 +223,6 @@ Bus	b2v_BUS(
 	.slave_6_dat_i(sdram_dat_i),
 	.slave_6_dat_o(sdram_dat_o),
 	.slave_6_ack_i(sdram_ack)
-
 	);
 
 

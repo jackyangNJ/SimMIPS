@@ -1,5 +1,5 @@
 `include "BusConfig.v"
-module Bus(
+module BusMatrix(
 //其他的输入输出
 	input clk_i,
 	input rst_i,

@@ -6,25 +6,24 @@ module pipeline_cpu(
 	output [31:0] iphy_addr_o,
 	output [31:0] data_o,
 	output        data_wr_o,
-	output [3:0] data_bytesel_o,
+	output [3:0]  data_bytesel_o,
 	
-	output       ibus_memory_en_o,
-	input        ibus_memory_data_ready_i,
-	input [31:0] ibus_memory_data_i,
-	output       dbus_memory_en_o,
-	input [31:0] dbus_memory_data_i,
-	input        dbus_memory_data_ready_i,
-	output       dbus_peripheral_en_o,
-	input [31:0] dbus_peripheral_data_i,
-	input        dbus_peripheral_data_ready_i,
-	output       icache_en_o,
-	input        icache_data_ready_i,
-	input [31:0] icache_data_i,
-	output       dcache_en_o,
-	input        dcache_data_ready_i,
-	input [31:0] dcache_data_i,
-	
-	
+	output        ibus_memory_en_o,
+	input         ibus_memory_data_ready_i,
+	input [31:0]  ibus_memory_data_i,
+	output        dbus_memory_en_o,
+	input [31:0]  dbus_memory_data_i,
+	input         dbus_memory_data_ready_i,
+	output        dbus_peripheral_en_o,
+	input [31:0]  dbus_peripheral_data_i,
+	input         dbus_peripheral_data_ready_i,
+	output        icache_en_o,
+	input         icache_data_ready_i,
+	input [31:0]  icache_data_i,
+	output        dcache_en_o,
+	input         dcache_data_ready_i,
+	input [31:0]  dcache_data_i,
+	/* external intrrupts*/
 	input  hw_interrupt0_i,
 	input  hw_interrupt1_i,
 	input  hw_interrupt2_i,
@@ -321,9 +320,6 @@ MMU mmu(
 	.tlb_entrylo1_data_valid_o(tlb_entrylo1_data_valid_o),
 	.bad_vaddr_o(mmu_bad_vaddr_o)
 );
-
-
-
 
 
 
