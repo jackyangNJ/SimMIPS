@@ -1,4 +1,4 @@
-`include "BusConfig.v"
+`include "BusConfigPer.v"
 module BusSlaveSelectorPer(
 	input[31:0] adr_i,
 	input stb_i,

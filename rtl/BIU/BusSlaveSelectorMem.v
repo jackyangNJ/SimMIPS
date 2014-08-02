@@ -1,4 +1,4 @@
-`include "BusConfig.v"
+`include "BusConfigMem.v"
 module BusSlaveSelectorMem(
 	input[31:0] adr_i,
 	input stb_i,
