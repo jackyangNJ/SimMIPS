@@ -96,7 +96,7 @@ module BIU(
 	
 	assign ibus_memory_data_ready_o = !ibus_mem_req & ibus_memory_en_i;
 	assign dbus_memory_data_ready_o = !dbus_mem_req & dbus_memory_en_i;
-	assign dbus_peripheral_data_ready_o = !dp_req;
+	assign dbus_peripheral_data_ready_o = !dp_req & dbus_peripheral_en_i;
 	
 	/* bus signals */
 	assign bus_mem_stb_o = im_stb|dm_stb;

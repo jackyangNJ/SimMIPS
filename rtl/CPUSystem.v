@@ -7,7 +7,7 @@ module CPUSystem(
 
 /*globa signals*/
 wire clk_core = external_clk_i;
-wire clk_bus  = external_clk_i;
+// wire clk_bus  = external_clk_i;
 wire clk_per  = external_clk_i;
 wire rst = external_rst_i;
 wire[31:0] core_dphy_addr_o,core_iphy_addr_o;
@@ -17,6 +17,12 @@ wire[3:0]  core_data_bytesel_o;
 
 wire core_ibus_memory_en_o,core_dbus_memory_en_o,core_dbus_peripheral_en_o;
 wire core_icache_en_o,core_dcache_en_o;
+
+wire biu_ibus_memory_data_ready_o,biu_dbus_memory_data_ready_o,biu_dbus_peripheral_data_ready_o;
+wire[31:0] biu_ibus_memory_data_o,biu_dbus_peripheral_data_o,biu_dbus_memory_data_o;
+
+wire[31:0] mbus_dat_o,pbus_dat_o;
+wire mbus_ack_o,pbus_ack_o;
 
 pipeline_cpu core(
 	.clk(clk_core),
@@ -36,7 +42,7 @@ pipeline_cpu core(
 	.dbus_memory_data_i(biu_dbus_memory_data_o),
 	.dbus_peripheral_en_o(core_dbus_peripheral_en_o),
 	.dbus_peripheral_data_i(biu_dbus_peripheral_data_o),
-	.dbus_peripheral_data_ready_i(biu_dbus_memory_data_ready_o),
+	.dbus_peripheral_data_ready_i(biu_dbus_peripheral_data_ready_o),
 	.icache_en_o(core_icache_en_o),
 	.icache_data_i(32'b0),
 	.icache_data_ready_i(1'b0),
@@ -48,11 +54,10 @@ pipeline_cpu core(
 	.hw_interrupt2_i(1'b0),
 	.hw_interrupt3_i(1'b0),
 	.hw_interrupt4_i(1'b0),
-	.hw_interrupt5_i(1'b0),
+	.hw_interrupt5_i(1'b0)
 );
 
-wire biu_ibus_memory_data_ready_o,biu_dbus_memory_data_ready_o,biu_dbus_peripheral_data_ready_o;
-wire[31:0] biu_ibus_memory_data_o,biu_dbus_peripheral_data_o,biu_dbus_memory_data_o;
+
 wire biu_bus_mem_stb_o,biu_bus_mem_we_o;
 wire[31:0] biu_bus_mem_adr_o,biu_bus_mem_dat_o;
 wire[3:0] biu_bus_mem_bytesel_o;
@@ -101,16 +106,14 @@ BIU biu(
 wire ram_ack_o;
 wire[31:0] ram_dat_o;
 
-wire mbus_adr_err_o;
-wire[31:0] mbus_dat_o;
-wire mbus_ack_o;
+
 
 wire mbus_slave_0_cyc_o,mbus_slave_0_stb_o,mbus_slave_0_we_o;
 wire[31:0] mbus_slave_0_adr_o,mbus_slave_0_dat_o;
 wire[3:0] mbus_slave_0_sel_o;
 
 BusSwitchMem Bus_Switch_Mem(
-	.adr_err_o(mbus_adr_err_o),
+
 	.master_stb_i(biu_bus_mem_stb_o),
 	.master_we_i(biu_bus_mem_we_o),
 	.master_adr_i(biu_bus_mem_adr_o),
@@ -137,6 +140,7 @@ RamOnChip ram(
 	.cyc_i(mbus_slave_0_cyc_o),
 	.stb_i(mbus_slave_0_stb_o),
 	.sel_i(mbus_slave_0_sel_o),
+	.adr_i(mbus_slave_0_adr_o),
 	.we_i(mbus_slave_0_we_o),
 	.dat_i(mbus_slave_0_dat_o),
 	.dat_o(ram_dat_o),
@@ -150,8 +154,7 @@ RamOnChip ram(
 wire gpio_ack_o;
 wire[31:0] gpio_dat_o;
 wire pbus_adr_err_o;
-wire[31:0] pbus_dat_o;
-wire pbus_ack_o;
+
 
 wire pbus_slave_0_cyc_o,pbus_slave_0_stb_o,pbus_slave_0_we_o;
 wire[31:0] pbus_slave_0_adr_o,pbus_slave_0_dat_o;
@@ -185,7 +188,7 @@ GPIO gpio(
 	.adr_i(pbus_slave_0_adr_o),
 	.we_i(pbus_slave_0_we_o), 
 	.sel_i(pbus_slave_0_sel_o),
-	.dat_i(pbus_slave_0_adr_o),
+	.dat_i(pbus_slave_0_dat_o),
 	.dat_o(gpio_dat_o),
 	.ack_o(gpio_ack_o),
 	.gpio_pin(gpio_pin)
