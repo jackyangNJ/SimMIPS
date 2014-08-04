@@ -1,10 +1,6 @@
-`include "BusConfigMem.v"
+`include "BusConfig.v"
 module BusSwitchMem(
 //其他的输入输出
-	input clk_i,
-	input rst_i,
-	output clk_o,
-	output rst_o,
 	output adr_err_o,
 //仅与主设备相连的输入输出
 	input master_stb_i,
@@ -88,10 +84,8 @@ module BusSwitchMem(
 	output[3:0]  slave_7_sel_o
 );
 	
-	wire [`SLAVE_NUMBER-1:0]cs;
-	
-	assign clk_o = clk_i;
-	assign rst_o = rst_i;
+	wire [`MBUS_SLAVE_NUMBER-1:0]cs;
+
 	
 	BusSlaveSelectorMem busSlaveSelector(
 		.adr_i(master_adr_i),

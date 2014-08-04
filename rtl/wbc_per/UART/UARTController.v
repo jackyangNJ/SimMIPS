@@ -39,10 +39,6 @@ wire	send_start;
 wire	send_baud;
 wire	[7:0] send_data;
 
-
-
-
-
 BaudGenerator	receive_baudger(
 	.clk_i(clk_i),
 	.rst_i(rst_i),

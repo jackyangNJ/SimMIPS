@@ -2,7 +2,7 @@ module SinglePortRam
 (
 	input clk_i,
 	input we_i,
-	input [7:0] adr_i, 
+	input [11:0] adr_i, 
 	input [3:0] be_i, 
 	input [31:0] dat_i,
 	output[31:0] dat_o
@@ -10,7 +10,15 @@ module SinglePortRam
 	
 	// use a multi-dimensional packed array
 	//to model individual bytes within the word
-	logic [3:0][7:0] ram[0:255];
+	// (* ram_init_file = "ram_init.mif" *) logic [3:0][7:0] ram[0:4095];
+	logic [3:0][7:0] ram[0:4095];
+	integer i;
+	initial
+	begin
+		for(i=0;i<1000;i=i+1)
+			ram[i] = i;
+	end
+	
 	reg[31:0] q;
 	always_ff@(posedge clk_i)
 	begin
