@@ -1,3 +1,3 @@
 MIPS-Verilog
 ============
-[click here to get more details](http://guoyunsky.iteye.com)<br />
+Welcome visit project website [http://jackyang74.github.io/MIPS-Verilog](http://jackyang74.github.io/MIPS-Verilog)<br />
