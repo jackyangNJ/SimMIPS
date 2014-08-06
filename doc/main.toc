@@ -1,3 +1,0 @@
-\contentsline {section}{\numberline {1}LaTex 简介}{2}
-\contentsline {section}{\numberline {2}LaTex源文件}{2}
-\contentsline {section}{\numberline {3}结论}{2}

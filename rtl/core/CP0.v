@@ -178,22 +178,25 @@ module CP0(
 	//CP0 Status
 	always @ (posedge clk) 
 	begin
-		if(!cpu_pause_i)
-			begin
-				if(cp0_wen_i && cp0_addr_i == `CP0_STATUS_ADDR)
-					{cp0_status_im,cp0_status_um,cp0_status_exl,cp0_status_ie} <=
-										{cp0_data_i[15:10],cp0_data_i[4],cp0_data_i[1:0]};
-				else
-					begin
-						if(exc_occur)
-							cp0_status_exl <= 1'b1;
-						else
-							if(instr_ERET_i)
-								cp0_status_exl <= 0;
-					end
-			end
+		if(reset)
+			cp0_status_exl <= 1'b1;
+		else
+			if(!cpu_pause_i)
+				begin
+					if(cp0_wen_i && cp0_addr_i == `CP0_STATUS_ADDR)
+						{cp0_status_im,cp0_status_um,cp0_status_exl,cp0_status_ie} <=
+											{cp0_data_i[15:10],cp0_data_i[4],cp0_data_i[1:0]};
+					else
+						begin
+							if(exc_occur)
+								cp0_status_exl <= 1'b1;
+							else
+								if(instr_ERET_i)
+									cp0_status_exl <= 0;
+						end
+				end
 	end
-	
+
 	//CP0 Cause
 	always @ (posedge clk) 
 	begin

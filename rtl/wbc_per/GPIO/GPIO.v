@@ -39,7 +39,7 @@ module GPIO(
 				begin
 					ack <= 1'b1;
 					if(we_i)
-						case(adr_i[0])
+						case(adr_i[2])
 							1'b0:
 								reg_data <=  dat_i[7:0];
 							1'b1:
@@ -59,7 +59,7 @@ module GPIO(
 	reg[31:0] data;
 	always@(*)
 	begin
-		case(adr_i[0])
+		case(adr_i[2])
 			1'b0:
 				data = {24'b0,reg_data};
 			1'b1:
