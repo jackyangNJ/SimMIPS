@@ -6,8 +6,8 @@ module pipeline_cpu(
 	output [31:0] iphy_addr_o,
 	output [31:0] data_o,
 	output        data_wr_o,
-	output [3:0]  data_bytesel_o,
-	
+	output [1:0]  data_type_o,
+
 	output        ibus_memory_en_o,
 	input         ibus_memory_data_ready_i,
 	input [31:0]  ibus_memory_data_i,
@@ -98,8 +98,8 @@ module pipeline_cpu(
 	wire       id_dmen;
 	wire       id_memtoreg;
 	wire       id_memwr;
-	wire[3:0]  id_mem_bytesel_o;
-	wire       id_mem_extsigned_o;
+	wire[1:0]  id_dm_type_o;
+	wire       id_dm_extsigned_o;
 	wire       id_alu_b_sel;
 	wire       id_shift_sel;
 	wire       id_ext_top;
@@ -168,8 +168,8 @@ wire[31:0] 	ex_cp0_out;
 wire[2:0] 	ex_result_sel;
 wire[31:0]	ex_return_addr;
 wire[31:0]  ex_pc;
-wire[3:0] ex_mem_bytesel_o;
-wire ex_mem_extsigned_o;
+wire[1:0] ex_dm_type_o;
+wire ex_dm_extsigned_o;
 wire		ex_memtoreg;
 wire[4:0] 	ex_regdst_addr;
 wire	ex_of_ctrl;
@@ -186,8 +186,8 @@ wire	mem_regwr;
 wire	[4:0] mem_regdst_addr;
 wire	mem_memtoreg;
 
-wire[3:0] mem_bytesel_o;
-wire mem_extsigned_o;
+wire[1:0] mem_dm_type_o;
+wire mem_dm_extsigned_o;
 wire dm_en_o,dm_wr_o;
 wire[31:0] dm_adr_o,dm_dat_o;
 wire[31:0] mem_result;
@@ -259,7 +259,7 @@ MMU mmu(
 	.iphy_addr_o(iphy_addr_o),
 	.data_o(data_o),
 	.data_wr_o(data_wr_o),
-	.data_bytesel_o(data_bytesel_o),
+	.data_type_o(data_type_o),
 	//TLB instructions 
 	.instr_tlbp_i(instr_tlbp_o),
 	.instr_tlbr_i(instr_tlbr_o),
@@ -297,8 +297,8 @@ MMU mmu(
 	.dm_en_i(dm_en_o),
 	.dm_data_i(dm_dat_o),
 	.dm_wr_i(dm_wr_o),
-	.dm_bytesel_i(mem_bytesel_o),
-	.dm_extsigned_i(mem_extsigned_o),
+	.dm_type_i(mem_dm_type_o),
+	.dm_extsigned_i(mem_dm_extsigned_o),
 	.dm_data_o(mmu_dm_data_o),
 	
 	.instruction_o(mmu_instruction_o), 
@@ -422,8 +422,8 @@ ID	instr_decode(
 	.id_dmen(id_dmen),
 	.id_memtoreg(id_memtoreg),
 	.id_memwr(id_memwr),
-	.id_mem_extsigned_o(id_mem_extsigned_o),
-	.id_mem_bytesel_o(id_mem_bytesel_o),
+	.id_dm_extsigned_o(id_dm_extsigned_o),
+	.id_dm_type_o(id_dm_type_o),
 	.id_alu_b_sel(id_alu_b_sel),
 	.id_shift_sel(id_shift_sel),
 	.id_ext_top(id_ext_top),
@@ -552,8 +552,8 @@ IDEx_register	b2v_inst19(
 	.id_regwr(id_regwr),
 	.id_memtoreg(id_memtoreg),
 	.id_memwr(id_memwr),
-	.id_mem_bytesel_i(id_mem_bytesel_o),
-	.id_mem_extsigned_i(id_mem_extsigned_o),
+	.id_dm_type_i(id_dm_type_o),
+	.id_dm_extsigned_i(id_dm_extsigned_o),
 	.id_alu_b_sel(id_alu_b_sel),
 	.id_dmen(id_dmen),
 	.id_of_ctrl(id_of_ctrl),
@@ -571,8 +571,8 @@ IDEx_register	b2v_inst19(
 	.ex_memtoreg(ex_memtoreg),
 	.ex_memwr(ex_memwr),
 	.ex_dmen(ex_dmen),
-	.ex_mem_bytesel_o(ex_mem_bytesel_o),
-	.ex_mem_extsigned_o(ex_mem_extsigned_o),
+	.ex_dm_type_o(ex_dm_type_o),
+	.ex_dm_extsigned_o(ex_dm_extsigned_o),
 	.ex_of_ctrl(ex_of_ctrl),
 	.ex_alu_b_sel(ex_alu_b_sel),
 	.ex_a(ex_a),
@@ -641,8 +641,8 @@ ExMem_register	b2v_inst26(
 	.ex_memtoreg(ex_memtoreg),
 	.ex_memwr(ex_memwr),
 	.ex_dmen(ex_dmen),
-	.ex_mem_bytesel_i(ex_mem_bytesel_o),
-	.ex_mem_extsigned_i(ex_mem_extsigned_o),
+	.ex_dm_type_i(ex_dm_type_o),
+	.ex_dm_extsigned_i(ex_dm_extsigned_o),
 	.ex_b(ex_b),
 	.ex_regdst_addr(ex_regdst_addr),
 	.ex_result(ex_result),
@@ -651,8 +651,8 @@ ExMem_register	b2v_inst26(
 	.mem_memtoreg(mem_memtoreg),
 	.mem_dmen(dm_en_o),
 	.mem_memwr(dm_wr_o),
-	.mem_bytesel_o(mem_bytesel_o),
-	.mem_extsigned_o(mem_extsigned_o),
+	.mem_dm_type_o(mem_dm_type_o),
+	.mem_dm_extsigned_o(mem_dm_extsigned_o),
 	.mem_result(mem_result),
 	.mem_regdst_addr(mem_regdst_addr),
 	.mem_rt(dm_dat_o));

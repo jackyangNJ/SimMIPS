@@ -13,7 +13,7 @@ wire rst = external_rst_i;
 wire[31:0] core_dphy_addr_o,core_iphy_addr_o;
 wire[31:0] core_data_o;
 wire       core_data_wr_o;
-wire[3:0]  core_data_bytesel_o;
+wire[1:0]  core_data_type_o;
 
 wire core_ibus_memory_en_o,core_dbus_memory_en_o,core_dbus_peripheral_en_o;
 wire core_icache_en_o,core_dcache_en_o;
@@ -32,7 +32,7 @@ pipeline_cpu core(
 	.iphy_addr_o(core_iphy_addr_o),
 	.data_o(core_data_o),
 	.data_wr_o(core_data_wr_o),
-	.data_bytesel_o(core_data_bytesel_o),
+	.data_type_o(core_data_type_o),
 	
 	.ibus_memory_en_o(core_ibus_memory_en_o),
 	.ibus_memory_data_ready_i(biu_ibus_memory_data_ready_o),
@@ -60,10 +60,10 @@ pipeline_cpu core(
 
 wire biu_bus_mem_stb_o,biu_bus_mem_we_o;
 wire[31:0] biu_bus_mem_adr_o,biu_bus_mem_dat_o;
-wire[3:0] biu_bus_mem_bytesel_o;
+wire[3:0] bus_mem_sel_o;
 wire biu_bus_per_stb_o,biu_bus_per_we_o;
 wire[31:0] biu_bus_per_adr_o,biu_bus_per_dat_o;
-wire[3:0] biu_bus_per_bytesel_o;
+wire[3:0] bus_per_sel_o;
 
 BIU biu(
 	.clk_i(clk_core),
@@ -72,7 +72,7 @@ BIU biu(
 	.iphy_addr_i(core_iphy_addr_o),
 	.data_i(core_data_o),
 	.data_wr_i(core_data_wr_o),
-	.data_bytesel_i(core_data_bytesel_o),
+	.data_type_i(core_data_type_o),
 	.ibus_memory_en_i(core_ibus_memory_en_o),
 	.ibus_memory_data_ready_o(biu_ibus_memory_data_ready_o),
 	.ibus_memory_data_o(biu_ibus_memory_data_o),
@@ -89,7 +89,7 @@ BIU biu(
 	.bus_mem_we_o(biu_bus_mem_we_o),
 	.bus_mem_adr_o(biu_bus_mem_adr_o),
 	.bus_mem_dat_o(biu_bus_mem_dat_o),
-	.bus_mem_bytesel_o(biu_bus_mem_bytesel_o),
+	.bus_mem_sel_o(bus_mem_sel_o),
 	
 	.bus_per_dat_i(pbus_dat_o),
 	.bus_per_ack_i(pbus_ack_o),
@@ -97,7 +97,7 @@ BIU biu(
 	.bus_per_we_o(biu_bus_per_we_o),
 	.bus_per_adr_o(biu_bus_per_adr_o),
 	.bus_per_dat_o(biu_bus_per_dat_o),
-	.bus_per_bytesel_o(biu_bus_per_bytesel_o)
+	.bus_per_sel_o(bus_per_sel_o)
 );
 
 //
@@ -118,7 +118,7 @@ BusSwitchMem Bus_Switch_Mem(
 	.master_we_i(biu_bus_mem_we_o),
 	.master_adr_i(biu_bus_mem_adr_o),
 	.master_dat_i(biu_bus_mem_dat_o),
-	.master_sel_i(biu_bus_mem_bytesel_o),
+	.master_sel_i(bus_mem_sel_o),
 	.master_dat_o(mbus_dat_o),
 	.master_ack_o(mbus_ack_o),
 	
@@ -166,7 +166,7 @@ BusSwitchPer Bus_Switch_Per(
 	.master_we_i(biu_bus_per_we_o),
 	.master_adr_i(biu_bus_per_adr_o),
 	.master_dat_i(biu_bus_per_dat_o),
-	.master_sel_i(biu_bus_per_bytesel_o),
+	.master_sel_i(bus_per_sel_o),
 	.master_dat_o(pbus_dat_o),
 	.master_ack_o(pbus_ack_o),
 	

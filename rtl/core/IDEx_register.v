@@ -7,8 +7,8 @@ module IDEx_register(
 	input         id_memtoreg,
 	input         id_memwr,
 	input         id_dmen,
-	input [3:0]   id_mem_bytesel_i,
-	input         id_mem_extsigned_i,
+	input [1:0]   id_dm_type_i,
+	input         id_dm_extsigned_i,
 	input [31:0]  return_addr_i,
 	input [31:0]  id_pc_i,
 	input [2:0]   id_ex_result_sel,
@@ -27,8 +27,8 @@ module IDEx_register(
 	output        ex_memtoreg,
 	output        ex_memwr,
 	output        ex_dmen,
-	output [3:0]  ex_mem_bytesel_o,
-	output        ex_mem_extsigned_o,
+	output [1:0]  ex_dm_type_o,
+	output        ex_dm_extsigned_o,
 	output [1:0]  ex_shift_op,
 	output [4:0]  ex_shift_amount,
 	output        ex_of_ctrl,
@@ -48,8 +48,8 @@ module IDEx_register(
 	reg I_regwr;
 	reg I_memtoreg;
 	reg I_memwr;
-	reg [3:0] I_mem_bytesel;
-	reg I_mem_extsigned;
+	reg [1:0] I_dm_type;
+	reg I_dm_extsigned;
 	reg [2:0]I_ex_result_sel;
 	reg I_alu_b_sel;
 	reg [3:0]I_alu_op;
@@ -70,8 +70,8 @@ module IDEx_register(
 			I_regwr <= 1'b0;
 			I_memtoreg <= 1'b0;
 			I_memwr <= 1'b0;
-			I_mem_extsigned <= 1'b0;
-			I_mem_bytesel <= 4'b0;
+			I_dm_extsigned <= 1'b0;
+			I_dm_type <= 2'b0;
 			I_ex_result_sel <= 2'b00;
 			I_alu_b_sel <= 1'b0;
 			I_alu_op <= 4'd0;
@@ -93,8 +93,8 @@ module IDEx_register(
 				I_regwr <= id_regwr;
 				I_memtoreg <= id_memtoreg;
 				I_memwr <= id_memwr;
-				I_mem_bytesel <= id_mem_bytesel_i;
-				I_mem_extsigned <= id_mem_extsigned_i;
+				I_dm_type <= id_dm_type_i;
+				I_dm_extsigned <= id_dm_extsigned_i;
 				I_ex_result_sel <= id_ex_result_sel;
 				I_alu_b_sel <= id_alu_b_sel;
 				I_alu_op <= id_alu_op;
@@ -118,8 +118,8 @@ module IDEx_register(
 	assign ex_memtoreg = I_memtoreg;
 	assign ex_memwr = I_memwr;
 	assign ex_dmen = I_dmen;
-	assign ex_mem_bytesel_o = I_mem_bytesel;
-	assign ex_mem_extsigned_o = I_mem_extsigned;
+	assign ex_dm_type_o = I_dm_type;
+	assign ex_dm_extsigned_o = I_dm_extsigned;
 	assign ex_shift_op = I_shift_op;
 	assign ex_shift_amount = I_shift_amount;
 	assign ex_of_ctrl = I_of_ctrl;

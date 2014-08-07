@@ -7,7 +7,7 @@ module BIU(
 	input [31:0] iphy_addr_i,
 	input [31:0] data_i,
 	input        data_wr_i,
-	input [3:0]  data_bytesel_i,
+	input [1:0]  data_type_i,
 	
 	input        ibus_memory_en_i,
 	output       ibus_memory_data_ready_o,
@@ -26,7 +26,7 @@ module BIU(
 	output       bus_mem_we_o,
 	output[31:0] bus_mem_adr_o,
 	output[31:0] bus_mem_dat_o,
-	output[3:0]  bus_mem_bytesel_o,
+	output[3:0]  bus_mem_sel_o,
 	
 	input [31:0] bus_per_dat_i,
 	input        bus_per_ack_i,
@@ -34,7 +34,7 @@ module BIU(
 	output       bus_per_we_o,
 	output[31:0] bus_per_adr_o,
 	output[31:0] bus_per_dat_o,
-	output[3:0]  bus_per_bytesel_o
+	output[3:0]  bus_per_sel_o
 );
 
 	wire im_cs,ibus_mem_req,im_stb;
@@ -89,10 +89,45 @@ module BIU(
 		.sub_stb_o(dp_stb),
 		.sub_dat_o(dp_dat)
 	);
+	/* generate bus signal sel*/
+	reg[3:0] dbus_bytesel;
+	always@(*)
+	begin
+		dbus_bytesel = 0;
+		case(data_type_i)
+			2'b01:
+				dbus_bytesel[dphy_addr_i[1:0]] = 1'b1;
+			2'b10:
+				if(dphy_addr_i[1])
+					dbus_bytesel = 4'b1100;
+				else
+					dbus_bytesel = 4'b0011;
+			default:
+				dbus_bytesel = 4'b1111;
+		endcase
+	end
+	reg[31:0] dbus_memory_data,dbus_peripheral_data;
+	reg[31:0] dbus_data;
+	always@(*)
+	begin
+		if(dbus_memory_en_i)
+			dbus_data = dm_dat;
+		else
+			dbus_data = dp_dat;
+		case(dbus_bytesel)
+			4'b0001: dbus_data = {24'b0,dbus_data[7:0]};
+			4'b0010: dbus_data = {24'b0,dbus_data[15:8]};
+			4'b0100: dbus_data = {24'b0,dbus_data[23:16]};
+			4'b1000: dbus_data = {24'b0,dbus_data[31:25]};
+			4'b0011: dbus_data = {16'b0,dbus_data[15:0]};
+			4'b1100: dbus_data = {16'b0,dbus_data[31:16]};
+			default: dbus_data = dbus_data;
+		endcase
+	end
 	
 	assign ibus_memory_data_o = im_dat;
-	assign dbus_memory_data_o = dm_dat;
-	assign dbus_peripheral_data_o = dp_dat;
+	assign dbus_memory_data_o = dbus_data;
+	assign dbus_peripheral_data_o = dbus_data;
 	
 	assign ibus_memory_data_ready_o = !ibus_mem_req & ibus_memory_en_i;
 	assign dbus_memory_data_ready_o = !dbus_mem_req & dbus_memory_en_i;
@@ -103,12 +138,12 @@ module BIU(
 	assign bus_mem_we_o = data_wr_i & dm_cs;
 	assign bus_mem_adr_o = (iphy_addr_i&{32{im_cs}})|(dphy_addr_i&{32{dm_cs}});
 	assign bus_mem_dat_o = data_i;
-	assign bus_mem_bytesel_o = im_cs ? 4'b1111 : data_bytesel_i;
+	assign bus_mem_sel_o = im_cs ? 4'b1111 : dbus_bytesel;
 	
 	assign bus_per_stb_o = dp_stb;
 	assign bus_per_we_o  = data_wr_i;
 	assign bus_per_adr_o = dphy_addr_i;
 	assign bus_per_dat_o = data_i;
-	assign bus_per_bytesel_o = data_bytesel_i;
+	assign bus_per_sel_o = dbus_bytesel;
 
 endmodule

@@ -8,7 +8,7 @@ module MMU(
 	output [31:0] iphy_addr_o,
 	output [31:0] data_o,
 	output        data_wr_o,
-	output [3:0]  data_bytesel_o,
+	output [1:0]  data_type_o,
 	//TLB instructions 
 	input instr_tlbp_i,
 	input instr_tlbr_i,
@@ -24,14 +24,14 @@ module MMU(
 	input [31:0] cp0_config_i,
 	
 	//connected with BUS
-	output ibus_memory_en_o,
-	input  ibus_memory_data_ready_i,
+	output       ibus_memory_en_o,
+	input        ibus_memory_data_ready_i,
 	input [31:0] ibus_memory_data_i,
-	output dbus_memory_en_o,
-	input  dbus_memory_data_ready_i,
-	input [31:0]dbus_memory_data_i,
-	output dbus_peripheral_en_o,
-	input  dbus_peripheral_data_ready_i,
+	output       dbus_memory_en_o,
+	input        dbus_memory_data_ready_i,
+	input [31:0] dbus_memory_data_i,
+	output       dbus_peripheral_en_o,
+	input        dbus_peripheral_data_ready_i,
 	input[31:0]  dbus_peripheral_data_i,
 	
 	//connected with CACHE
@@ -46,7 +46,7 @@ module MMU(
 	input         dm_en_i,
 	input [31:0]  dm_data_i,
 	input         dm_wr_i,
-	input [3:0]   dm_bytesel_i,
+	input [1:0]   dm_type_i,
 	input         dm_extsigned_i,
 	output [31:0] dm_data_o,
 	output [31:0] instruction_o, 
@@ -176,7 +176,7 @@ begin
 								dbus_peripheral_en = 1'b1;
 							end
 						default:
-							begin						
+							begin
 								dphy_addr = dtlb_phy_addr;
 								if(!dtlb_hit)
 									dexception_tlb_refill = 1'b1;
@@ -195,7 +195,6 @@ begin
 					endcase
 				end
 		end
-			
 end
 
 reg [31:0] dm_data;
@@ -210,7 +209,7 @@ begin
 	else
 		if(ibus_memory_en)
 			instruction = ibus_memory_data_i;
-			
+
 	//data
 	if(dcache_en)
 		dm_data = dcache_data_i;
@@ -221,21 +220,16 @@ begin
 			if(dbus_peripheral_en)
 				dm_data = dbus_peripheral_data_i;
 	
-	case(dm_bytesel_i)
-		4'b0001:
-			if(dm_extsigned_i)
-				dm_data = {24'b0,dm_data[7:0]};
-			
-		4'b0011:
-			if(dm_extsigned_i)
-				dm_data = {16'b0,dm_data[15:0]};
-		default:
-			begin
-			end
+	case(dm_type_i)
+		2'b01:
+			if(dm_extsigned_i) dm_data = {{24{dm_data[7]}},dm_data[7:0]};
+			else dm_data = {24'b0,dm_data[7:0]};
+		2'b10:
+			if(dm_extsigned_i) dm_data = {{16{dm_data[15]}},dm_data[15:0]};
+			else dm_data = {16'b0,dm_data[15:0]};
+		default:dm_data = dm_data;
 	endcase
 end
-
-
 
 
 wire tlb_wr = (instr_tlbwi_i || instr_tlbwr_i) ? 1'b1 : 1'b0;
@@ -263,7 +257,7 @@ JTLB jtlb_entry(
 );
 assign data_wr_o = dm_wr_i;
 assign data_o = dm_data_i;
-assign data_bytesel_o = dm_bytesel_i;
+assign data_type_o = dm_type_i;
 //address
 assign iphy_addr_o = iphy_addr;
 assign dphy_addr_o = dphy_addr;

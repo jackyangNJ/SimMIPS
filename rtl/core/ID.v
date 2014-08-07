@@ -11,18 +11,18 @@ module ID(
 	output       id_regwr,
 	output       id_memtoreg,
 	output       id_memwr,
-	output [3:0] id_mem_bytesel_o,
-	output       id_mem_extsigned_o,
+	output [1:0] id_dm_type_o,
+	output       id_dm_extsigned_o,
 	output [2:0] id_ex_result_sel,
-	output id_alu_b_sel,
-	output [3:0]id_alu_op,
-	output [1:0]id_shift_op,
-	output [1:0]id_bra_addr_sel,
-	output id_shift_sel,
-	output id_ext_top,
+	output       id_alu_b_sel,
+	output [3:0] id_alu_op,
+	output [1:0] id_shift_op,
+	output [1:0] id_bra_addr_sel,
+	output       id_shift_sel,
+	output       id_ext_top,
 	output [1:0] id_regdst,
 	output [1:0] epc_sel,
-	output id_of_ctrl,
+	output       id_of_ctrl,
 	output [3:0] mdu_op_o,
 	/* CP0 */
 	input  cp0_interrupt_i,
@@ -156,6 +156,7 @@ module ID(
 	
 	assign id_regwr = ( R_Arithmetic_instr||
 						Shift_instr ||
+						instr_MUL ||
 						I_Arithmetic_instr||
 						LOAD_instr ||
 						instr_MFC0 || instr_MFHI || instr_MFLO ||
@@ -225,10 +226,10 @@ module ID(
 						instr_MFLO  ? 4'd7 :
 						instr_MTHI  ? 4'd8 :
 						instr_MTLO  ? 4'd9 : 4'd0;
-	assign id_mem_extsigned_o = (instr_LB || instr_LH) ? 1'b1 : 1'b0;
-	assign id_mem_bytesel_o = (instr_LW || instr_SW) 	? 4'b1111 :
-						   (instr_LH || instr_LHU || instr_SH)	? 4'b0011 : 
-						   (instr_LB || instr_LBU || instr_SB) 	? 4'b0001 : 4'b0;
+	assign id_dm_extsigned_o = (instr_LB || instr_LH) ? 1'b1 : 1'b0;
+	assign id_dm_type_o = (instr_LW || instr_SW) ? 2'b11 :
+						   (instr_LH || instr_LHU || instr_SH) ? 2'b10 : 
+						   (instr_LB || instr_LBU || instr_SB) ? 2'b01 : 2'b0;
 	
 	assign instr_ERET_o = instr_ERET;
 	assign exception_syscall_o = instr_SYSCALL;
