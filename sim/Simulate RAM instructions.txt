@@ -48,3 +48,16 @@ _start:
 	lb $1,3($4)
 	lb $5,8($4)
 	lbu $5,10($4)
+	
+#For testing Jump and Link instructions
+_start:  
+	li $1,0x12345678
+	li $2,0x12345678
+	jal add
+	li $3,0x171552
+	jal loop
+add:
+	li $2,0x5678
+	jr $31
+loop:
+	li $4,0x1234

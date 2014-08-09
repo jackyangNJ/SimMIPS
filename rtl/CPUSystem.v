@@ -1,7 +1,8 @@
 module CPUSystem(
 	input external_clk_i,
 	input external_rst_i,
-	
+	input uart_rx_i,
+	output uart_tx_o,
 	inout[7:0] gpio_pin
 );
 
@@ -9,6 +10,7 @@ module CPUSystem(
 wire clk_core = external_clk_i;
 // wire clk_bus  = external_clk_i;
 wire clk_per  = external_clk_i;
+wire clk_uart = external_clk_i;
 wire rst = external_rst_i;
 wire[31:0] core_dphy_addr_o,core_iphy_addr_o;
 wire[31:0] core_data_o;
@@ -151,17 +153,25 @@ RamOnChip ram(
 // peripheral signals
 //
 
+/* gpio */
 wire gpio_ack_o;
 wire[31:0] gpio_dat_o;
-wire pbus_adr_err_o;
 
+/* uart */
+wire uart_ack_o;
+wire[31:0] uart_dat_o;
+wire uart_int_o;
 
+/* slave 0 */
 wire pbus_slave_0_cyc_o,pbus_slave_0_stb_o,pbus_slave_0_we_o;
 wire[31:0] pbus_slave_0_adr_o,pbus_slave_0_dat_o;
 wire[3:0] pbus_slave_0_sel_o;
+/* slave 1 */
+wire pbus_slave_1_cyc_o,pbus_slave_1_stb_o,pbus_slave_1_we_o;
+wire[31:0] pbus_slave_1_adr_o,pbus_slave_1_dat_o;
+wire[3:0] pbus_slave_1_sel_o;
 
 BusSwitchPer Bus_Switch_Per(
-	.adr_err_o(pbus_adr_err_o),
 	.master_stb_i(biu_bus_per_stb_o),
 	.master_we_i(biu_bus_per_we_o),
 	.master_adr_i(biu_bus_per_adr_o),
@@ -177,7 +187,16 @@ BusSwitchPer Bus_Switch_Per(
 	.slave_0_we_o(pbus_slave_0_we_o),
 	.slave_0_adr_o(pbus_slave_0_adr_o),
 	.slave_0_dat_o(pbus_slave_0_dat_o),
-	.slave_0_sel_o(pbus_slave_0_sel_o)
+	.slave_0_sel_o(pbus_slave_0_sel_o),
+	
+	.slave_1_dat_i(uart_dat_o),
+	.slave_1_ack_i(uart_ack_o),
+	.slave_1_stb_o(pbus_slave_1_stb_o),
+	.slave_1_cyc_o(pbus_slave_1_cyc_o),
+	.slave_1_we_o(pbus_slave_1_we_o),
+	.slave_1_adr_o(pbus_slave_1_adr_o),
+	.slave_1_dat_o(pbus_slave_1_dat_o),
+	.slave_1_sel_o(pbus_slave_1_sel_o)
 );
 
 GPIO gpio(
@@ -192,6 +211,24 @@ GPIO gpio(
 	.dat_o(gpio_dat_o),
 	.ack_o(gpio_ack_o),
 	.gpio_pin(gpio_pin)
+);
+
+uart_top uart_16550(
+	.wb_clk_i(clk_uart), 
+	// Wishbone signals
+	.wb_rst_i(rst),
+	.wb_adr_i(pbus_slave_1_adr_o[4:0]),
+	.wb_dat_i(pbus_slave_1_dat_o),
+	.wb_dat_o(uart_dat_o),
+	.wb_we_i(pbus_slave_1_we_o),
+	.wb_stb_i(pbus_slave_1_stb_o),
+	.wb_cyc_i(pbus_slave_1_cyc_o),
+	.wb_ack_o(uart_ack_o),
+	.wb_sel_i(pbus_slave_1_sel_o),
+	.int_o(uart_int_o), // interrupt request
+	// serial input/output
+	.stx_pad_o(uart_tx_o),
+	.srx_pad_i(uart_rx_i)
 );
 endmodule
 
