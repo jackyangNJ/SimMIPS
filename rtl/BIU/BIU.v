@@ -89,6 +89,7 @@ module BIU(
 		.sub_stb_o(dp_stb),
 		.sub_dat_o(dp_dat)
 	);
+	
 	/* generate bus signal sel*/
 	reg[3:0] dbus_bytesel;
 	always@(*)
@@ -106,7 +107,8 @@ module BIU(
 				dbus_bytesel = 4'b1111;
 		endcase
 	end
-	reg[31:0] dbus_memory_data,dbus_peripheral_data;
+	
+	/* dealing byte select for data input */
 	reg[31:0] dbus_data;
 	always@(*)
 	begin
@@ -118,10 +120,26 @@ module BIU(
 			4'b0001: dbus_data = {24'b0,dbus_data[7:0]};
 			4'b0010: dbus_data = {24'b0,dbus_data[15:8]};
 			4'b0100: dbus_data = {24'b0,dbus_data[23:16]};
-			4'b1000: dbus_data = {24'b0,dbus_data[31:25]};
+			4'b1000: dbus_data = {24'b0,dbus_data[31:24]};
 			4'b0011: dbus_data = {16'b0,dbus_data[15:0]};
 			4'b1100: dbus_data = {16'b0,dbus_data[31:16]};
 			default: dbus_data = dbus_data;
+		endcase
+	end
+	
+	/*adjust order of data output*/
+	reg[31:0] dbus_data_output;
+	always@(*)
+	begin
+		dbus_data_output = data_i;
+		case(dbus_bytesel)
+			4'b0001: dbus_data_output[7:0]   = data_i[7:0];
+			4'b0010: dbus_data_output[15:8]  = data_i[7:0];
+			4'b0100: dbus_data_output[23:16] = data_i[7:0];
+			4'b1000: dbus_data_output[31:24] = data_i[7:0];
+			4'b0011: dbus_data_output[15:0]  = data_i[15:0];
+			4'b1100: dbus_data_output[31:16] = data_i[15:0];
+			default: dbus_data_output = data_i;
 		endcase
 	end
 	
@@ -137,13 +155,13 @@ module BIU(
 	assign bus_mem_stb_o = im_stb|dm_stb;
 	assign bus_mem_we_o = data_wr_i & dm_cs;
 	assign bus_mem_adr_o = (iphy_addr_i&{32{im_cs}})|(dphy_addr_i&{32{dm_cs}});
-	assign bus_mem_dat_o = data_i;
+	assign bus_mem_dat_o = dbus_data_output;
 	assign bus_mem_sel_o = im_cs ? 4'b1111 : dbus_bytesel;
 	
 	assign bus_per_stb_o = dp_stb;
 	assign bus_per_we_o  = data_wr_i;
 	assign bus_per_adr_o = dphy_addr_i;
-	assign bus_per_dat_o = data_i;
+	assign bus_per_dat_o = dbus_data_output;
 	assign bus_per_sel_o = dbus_bytesel;
 
 endmodule

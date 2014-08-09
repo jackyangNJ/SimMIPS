@@ -58,6 +58,7 @@ module ExMem_register(
 			E_regdst_addr = ex_regdst_addr;
 			E_pc = ex_pc_i;
 			E_mem_dm_type = ex_dm_type_i;
+			E_mem_dm_extsigned = ex_dm_extsigned_i;
 		end
 	end
 	

@@ -122,10 +122,11 @@ module ID(
 	wire instr_SYSCALL = (instr_op  == `OP_SPECIAL && instr_tail == `TAIL_SYSCALL);
 	/* instruction type */
 	
-	wire LOAD_instr = (instr_LB || instr_LBU || instr_LH || instr_LHU || instr_LW);
-	wire DM_instr   = (instr_LB || instr_LBU || instr_LH || instr_LHU || instr_SB || instr_SH || instr_LH || instr_LW || instr_SW );
+	wire Load_instr = (instr_LB || instr_LBU || instr_LH || instr_LHU || instr_LW);
+	wire Store_instr = (instr_SB || instr_SH || instr_SW);
+	wire LoadStore_instr   = (instr_LB || instr_LBU || instr_LH || instr_LHU || instr_SB || instr_SH || instr_LH || instr_LW || instr_SW );
 	wire MDU_instr   = (instr_DIV || instr_DIVU || instr_MUL || instr_MULT || instr_MULTU || instr_MFHI || instr_MFLO || instr_MTHI || instr_MTLO);
-	wire I_Arithmetic_instr = (id_instr[31:29] == 3'b001);
+	wire I_Arithmetic_instr = (id_instr[31:29] == 3'b001);  //I-type Arithmetic instructions
 	wire R_Arithmetic_instr = ((instr_op == `OP_SPECIAL && id_instr[5:3]==3'b100) || instr_SLT || instr_SLTU || instr_CLO  || instr_CLZ);
 	wire Shift_instr = (instr_SLL || instr_SLLV || instr_SRA || instr_SRAV || instr_SRL || instr_SRLV);
 	wire JumpLink_instr = (instr_JAL || instr_BGEZAL || instr_BLTZAL || instr_JALR);
@@ -152,33 +153,32 @@ module ID(
 	assign selpc = (cp0_interrupt_i || instr_SYSCALL || cp0_exception_tlb_i) ? 2'b10 :
 										   instr_ERET ? 2'b01 : 2'b0;
 	
-	assign id_dmen = DM_instr ? 1'b1 : 1'b0;
+	assign id_dmen = LoadStore_instr ? 1'b1 : 1'b0;
 	
 	assign id_regwr = ( R_Arithmetic_instr||
 						Shift_instr ||
 						instr_MUL ||
 						I_Arithmetic_instr||
-						LOAD_instr ||
+						Load_instr ||
 						instr_MFC0 || instr_MFHI || instr_MFLO ||
 						(instr_MOVZ && id_compare[3]) ||
 						(instr_MOVN && !id_compare[3]) ||
 						JumpLink_instr) ? 1'b1 : 1'b0;
 	
-	assign id_memtoreg = id_instr[31:26]==6'b100011 ? 1'b1 : 1'b0;
+	assign id_memtoreg = Load_instr ? 1'b1 : 1'b0;
 	
-	assign id_memwr = id_instr[31:26]==6'b101011 ? 1'b1 : 1'b0;
+	assign id_memwr = Store_instr ? 1'b1 : 1'b0;
 	
 	assign id_ex_result_sel = ((id_instr[31:26]==6'd0 && (id_instr[5:1]==5'b10101 || id_instr[5:3]==3'b100)) ||
-										(id_instr[31:26]==6'b011100 && id_instr[5:1]==5'b10000) ||
-										id_instr[31:29]==3'd1 ||
-										id_instr[31:26]==6'b100011 ||
-										id_instr[31:26]==6'b101011) ? 3'd1 :
-										(id_instr[31:26]==6'b010000 && id_instr[25:21]==5'd0) ? 3'd2 :
+										instr_CLO || instr_CLZ ||
+										I_Arithmetic_instr ||
+										LoadStore_instr) ? 3'd1 :
+										instr_MFC0 ? 3'd2 :
 										(instr_MOVN || instr_MOVZ) ? 3'd3 :
 										MDU_instr ? 3'd4 : 
 										JumpLink_instr ? 3'd5 : 3'd0;
-	
-	assign id_alu_b_sel = (id_instr[31:29]==3'd1 || id_instr[31:26]==6'b100011 || id_instr[31:26]==6'b101011) ? 1'b1 : 1'b0;
+
+	assign id_alu_b_sel = (I_Arithmetic_instr || LoadStore_instr) ? 1'b1 : 1'b0;
 	
 	assign id_alu_op = (instr_SUB || instr_SUBU) ? 4'b0001 :
 						instr_CLZ ? 4'b0010 :
@@ -194,28 +194,28 @@ module ID(
 	assign id_shift_op = (id_instr[31:26]==6'd0 && (id_instr[5:0]==6'd3 || id_instr[5:0]==6'd7 || id_instr[5:0]==6'd2 || id_instr[6:0]==7'd6)) ?
 								((id_instr[5:0]==6'd3 || id_instr[5:0]==6'd7) ? 2'b10 : 2'b01) : 2'b00;
 	
-	assign id_bra_addr_sel = (id_instr[31:26]==6'd0 && id_instr[5:0]==6'd8) ? 2'b10 :
-										(id_instr[31:26]==6'd2 || instr_JAL)? 2'b11 :
-										((id_instr[31:26]==6'd1 && id_instr[20:16]==5'd0 && id_compare[2]) ||
-											(id_instr[31:26]==6'd1 && id_instr[20:16]==5'd1 && !id_compare[2]) ||
-											(id_instr[31:26]==6'd4 && id_compare[0]) ||
-											(id_instr[31:26]==6'd5 && !id_compare[0]) ||
-											(id_instr[31:26]==6'd6 && (id_compare[2] || id_compare[1])) ||
-											(id_instr[31:26]==6'd7 && (!id_compare[2] && !id_compare[1]))) ? 2'b01 : 2'b00;
-	
+	assign id_bra_addr_sel = (instr_JR || instr_JALR) ? 2'b10 :
+								(instr_J || instr_JAL)? 2'b11 :
+								(((instr_BLTZ || instr_BGEZAL) && id_compare[2]) ||
+									((instr_BGEZ || instr_BGEZAL) && !id_compare[2]) ||
+									(instr_BEQ && id_compare[0]) ||
+									(instr_BNE && !id_compare[0]) ||
+									(instr_BLEZ && (id_compare[2] || id_compare[1])) ||
+									(instr_BGTZ && (!id_compare[2] && !id_compare[1]))) ? 2'b01 : 2'b00;
+
 	assign id_shift_sel = (id_instr[31:26]==6'd0 && (id_instr[5:0]==6'd4 || id_instr[5:0]==6'd7 || id_instr[6:0]==7'd6)) ? 1'b1 : 1'b0;
-	
+
 	assign id_ext_top = (id_instr[31:28]==4'b0011 && !(id_instr[27] && id_instr[26])) ? 1'b1 : 1'b0;
 	
-	assign id_regdst = (id_instr[31:29]==3'd1 || id_instr[31:26]==6'h23 || (id_instr[31:26]==6'b010000 && id_instr[25:21]==5'd0)) ? 2'd0 : 
-						(instr_JAL || instr_BGEZAL || instr_BLTZAL) ? 2'd2:	1'b1;
+	assign id_regdst = (I_Arithmetic_instr || Load_instr || instr_MFC0) ? 2'd0 : 
+						(instr_JAL || instr_BGEZAL || instr_BLTZAL) ? 2'd2: 2'd1;
 	
 	assign epc_sel = (cp0_interrupt_i && id_bpu_pc!=id_br_addr && Branch_instr) ? 2'b01 : 
 						(cp0_exception_tlb_i && !cp0_exception_tlb_byinstr_i) ? 2'b10:2'b0;
 	
 	assign id_of_ctrl = ((id_instr[31:26]==6'h0 && (id_instr[5:0]==6'h20 || id_instr[5:0]==6'h2a || id_instr[5:0]==6'h22)) ||
 								id_instr[31:26]==6'ha || id_instr[31:26]==6'h8) ? 1'b1 : 1'b0;
-	
+
 
 	assign mdu_op_o = 	instr_DIV   ? 4'd1 :
 						instr_DIVU  ? 4'd2 :
