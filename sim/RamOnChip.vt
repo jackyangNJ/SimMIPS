@@ -1,0 +1,59 @@
+`timescale 1 ns/ 1 ps
+module RamOnChip_vlg_tst();
+// constants                                           
+// general purpose registers
+reg eachvec;
+// test vector input registers
+reg [31:0] adr_i;
+reg clk_i;
+reg cyc_i;
+reg [31:0] dat_i;
+reg rst_i;
+reg [3:0] sel_i;
+reg stb_i;
+reg we_i;
+// wires                                               
+wire ack_o;
+wire [31:0]  dat_o;
+
+// assign statements (if any)                          
+RamOnChip i1 (
+// port map - connection between master ports and signals/registers   
+	.ack_o(ack_o),
+	.adr_i(adr_i),
+	.clk_i(clk_i),
+	.cyc_i(cyc_i),
+	.dat_i(dat_i),
+	.dat_o(dat_o),
+	.rst_i(rst_i),
+	.sel_i(sel_i),
+	.stb_i(stb_i),
+	.we_i(we_i)
+);
+
+integer i;
+initial                                                
+begin                                                  
+rst_i = 1; #10 rst_i = 0;
+for(i=0;i < 100 ; i=i+4)
+begin
+	cyc_i = 1'b1; stb_i = 1'b1;
+	we_i = 0; sel_i = 4'b1111;
+	adr_i = i;
+	wait(ack_o ==1'b1);
+	@(posedge clk_i);cyc_i = 1'b0; stb_i = 1'b0;
+	#10;
+end
+	
+
+
+end                                                    
+always                                                 
+// optional sensitivity list                           
+// @(event1 or event2 or .... eventn)                  
+begin                                                  
+clk_i=0;#3;
+clk_i=1;#3;
+end                                                    
+endmodule
+

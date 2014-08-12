@@ -152,7 +152,9 @@ end
 
 
 
-Multi_3_32 mdu_hi_sel(
+    Multi_3 #(
+      .DATA_WIDTH (32)
+	) mdu_hi_sel(
 	.a(mdu_a_i),
 	.b(product_hi),
 	.c(quotient),
@@ -160,7 +162,9 @@ Multi_3_32 mdu_hi_sel(
 	.data(hi_data)
 );
 
-Multi_3_32 mdu_lo_sel(
+	Multi_3 #(
+      .DATA_WIDTH (32)
+	) mdu_lo_sel(
 	.a(mdu_a_i),
 	.b(product_lo),
 	.c(remainder),
@@ -168,7 +172,9 @@ Multi_3_32 mdu_lo_sel(
 	.data(lo_data)
 );
 
-Multi_3_32 mdu_data_o_sel(
+    Multi_3 #(
+      .DATA_WIDTH (32)
+	)mdu_data_o_sel(
 	.a(reg_HI),
 	.b(reg_LO),
 	.c(lo_data),

@@ -1,4 +1,4 @@
-module CPUSystem(
+module cpu_top(
 	input external_clk_i,
 	input external_rst_i,
 	input uart_rx_i,
@@ -26,7 +26,7 @@ wire[31:0] biu_ibus_memory_data_o,biu_dbus_peripheral_data_o,biu_dbus_memory_dat
 wire[31:0] mbus_dat_o,pbus_dat_o;
 wire mbus_ack_o,pbus_ack_o;
 
-pipeline_cpu core(
+pipeline_core core(
 	.clk(clk_core),
 	.reset(rst),
 	

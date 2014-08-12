@@ -1,4 +1,4 @@
-module pipeline_cpu(
+module pipeline_core(
 	input clk,
 	input reset,
 
@@ -212,13 +212,16 @@ wire pause = mmu_cpu_pause_o | mdu_pipeline_stall;
 
 wire	overflow = ex_of_ctrl & ex_alu_of;
 
-Multi_4_32	id_br_addr_sel(
-	.a(id_pc_4_out),
-	.b(id_bra_addr),
-	.c(id_rs_out),
-	.d(id_jaddr_out),
-	.sel(id_bra_addr_sel),
-	.data(id_br_addr));
+    Multi_4 #(
+      .DATA_WIDTH (32)
+	)id_br_addr_sel(
+		.a(id_pc_4_out),
+		.b(id_bra_addr),
+		.c(id_rs_out),
+		.d(id_jaddr_out),
+		.sel(id_bra_addr_sel),
+		.data(id_br_addr)
+	);
 
 
 CU	b2v_inst18(
@@ -352,13 +355,15 @@ Section_rs	b2v_inst34(
 
 
 
-	
-Multi_3_32	next_pc_sel(
-	.a(if_new_pc),
-	.b(cp0_epc_o),
-	.c(vector_base_addr),
-	.sel(selpc),
-	.data(next_pc));	
+    Multi_3 #(
+      .DATA_WIDTH (32)
+	)next_pc_sel(
+	 .a(if_new_pc),
+	 .b(cp0_epc_o),
+	 .c(vector_base_addr),
+	 .sel(selpc),
+	 .data(next_pc)
+	);
 	
 PC_register b2v_inst0(
 	.clk(clk),
@@ -368,11 +373,14 @@ PC_register b2v_inst0(
 	.if_pc_out(if_pc_out));
 
 ///////////////////////////////IF stage////////////////////////////////////
-Multi_2_32	if_new_pc_selector(
-	.sel(id_pc_sel),
-	.a(if_bpu_pc),
-	.b(id_br_addr),
-	.data(if_new_pc));
+    Multi_2 #(
+      .DATA_WIDTH (32)
+    )if_new_pc_selector(
+     .sel(id_pc_sel),
+     .a(if_bpu_pc),
+     .b(id_br_addr),
+     .data(if_new_pc)
+    );
 	
 BPU	bpu_inst(
 	.clk(clk),
@@ -505,14 +513,19 @@ CP0	cp0(
 	.hw_interrupt5_i(hw_interrupt5_i)
 	);
 
-	Multi_3_32	epc_in_selector(
-	.sel(epc_sel),
-	.a(if_pc_out),
-	.b(if_new_pc),
-	.c(mem_pc_o),
-	.data(epc_in));
+    Multi_3 #(
+      .DATA_WIDTH (32)
+    ) epc_in_selector(
+     .sel(epc_sel),
+     .a(if_pc_out),
+     .b(if_new_pc),
+     .c(mem_pc_o),
+     .data(epc_in)
+    );
 
-Multi_4_32	id_a_selector(
+    Multi_4 #(
+      .DATA_WIDTH (32)
+    )	id_a_selector(
 	.a(id_rs_out),
 	.b(ex_result),
 	.c(mem_data),
@@ -521,7 +534,9 @@ Multi_4_32	id_a_selector(
 	.data(id_a));
 
 
-Multi_4_32	id_b_selector(
+    Multi_4 #(
+      .DATA_WIDTH (32)
+    )id_b_selector(
 	.a(id_rt_out),
 	.b(ex_result),
 	.c(mem_data),
@@ -529,7 +544,9 @@ Multi_4_32	id_b_selector(
 	.sel(id_b_sel),
 	.data(id_b));
 
-Multi_3_5	id_regdst_addr_sel(
+    Multi_3 #(
+      .DATA_WIDTH (5)
+    )id_regdst_addr_sel(
 	.sel(id_regdst),
 	.a(id_rt_addr),
 	.b(id_rd_addr),
@@ -590,7 +607,9 @@ IDEx_register	b2v_inst19(
 	);
 	
 ///////////////////////////////Ex stage////////////////////////////////////
-Multi_2_32	ex_alu_b_selector(
+    Multi_2 #(
+      .DATA_WIDTH (32)
+    )ex_alu_b_selector(
 	.sel(ex_alu_b_sel),
 	.a(ex_b),
 	.b(ex_imm_ext),
@@ -619,7 +638,9 @@ BarSH	ex_bs_out_sel(
 	.ex_shift_op(ex_shift_op),
 	.ex_bs_out(ex_bs_out));
 
-Multi_6_32	ex_result_selector(
+    Multi_6 #(
+      .DATA_WIDTH (32)
+    )ex_result_selector(
 	.a(ex_bs_out),
 	.b(ex_alu_out),
 	.c(ex_cp0_out),
@@ -659,7 +680,9 @@ ExMem_register	b2v_inst26(
 
 //////////////////////////////Mem Stage///////////////////////////////////////
 assign dm_adr_o = mem_result;
-Multi_2_32	mem_data_selector(
+    Multi_2 #(
+      .DATA_WIDTH (32)
+    )mem_data_selector(
 	.sel(mem_memtoreg),
 	.a(mem_result),
 	.b(mmu_dm_data_o),
@@ -696,7 +719,9 @@ Adder	id_bra_addr_adder(
 	.result(id_bra_addr));
 
 
-Multi_2_5	id_shift_amount_sel(
+    Multi_2 #(
+      .DATA_WIDTH (5)
+    )id_shift_amount_sel(
 	.sel(id_shift_sel),
 	.a(id_shamt),
 	.b(rs_l),
