@@ -1,4 +1,4 @@
-package mips.bootsender;
+package mips.bootclient;
 
 /**
  *

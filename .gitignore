@@ -114,3 +114,4 @@ sympy-plots-for-*.tex/
 # xindy
 *.xdy
 /sw/BootSender/target/
+/sw/BootClient/target/

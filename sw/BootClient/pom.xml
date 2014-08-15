@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>mips</groupId>
-    <artifactId>BootSender</artifactId>
+    <artifactId>BootClient</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <properties>
@@ -59,10 +59,10 @@
                         <configuration>
                             <headerType>gui</headerType>
                             <jar>${project.build.directory}/${artifactId}-${version}-shaded.jar</jar>
-                            <outfile>${project.build.directory}/BootSender.exe</outfile>
+                            <outfile>${project.build.directory}/BootClient.exe</outfile>
                             <downloadUrl>http://java.com/download</downloadUrl>
                             <classPath>
-                                <mainClass>mips.bootsender.Main</mainClass>
+                                <mainClass>mips.bootclient.Main</mainClass>
                                 <preCp>anything</preCp>
                             </classPath>
                             <icon>src/main/resources/icon/monkey.ico</icon>
@@ -79,8 +79,8 @@
                                 <txtProductVersion>1.0.0.0</txtProductVersion>
                                 <productName>${project.name}</productName>
                                 <companyName>JackYang</companyName>
-                                <internalName>BootSender</internalName>
-                                <originalFilename>BootSender.exe</originalFilename>
+                                <internalName>BootClient</internalName>
+                                <originalFilename>BootClient.exe</originalFilename>
                             </versionInfo>
                         </configuration>
                     </execution>
