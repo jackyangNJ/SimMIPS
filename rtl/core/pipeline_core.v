@@ -178,9 +178,9 @@ wire	ex_regwr;
 wire	ex_memwr;
 wire	ex_dmen;
 ///////////////////////////ex stage////////////////////////////////////
-	wire[31:0] 	ex_result;
+wire[31:0] 	ex_result;
 	/*MDU*/
-	wire mdu_pipeline_stall;
+wire mdu_pipeline_stall;
 ///////////////////////////////////////////////////////////////////////
 wire	mem_regwr;
 wire	[4:0] mem_regdst_addr;

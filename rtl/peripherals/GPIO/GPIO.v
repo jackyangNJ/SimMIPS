@@ -22,7 +22,7 @@ module GPIO(
 
   // WISHBONE interface
 
-	wire wb_acc = cyc_i & stb_i;            // WISHBONE access
+	wire cs_i = cyc_i & stb_i;            // WISHBONE access
 	reg ack;
 	integer i;
 	always @(posedge clk_i)
@@ -35,15 +35,13 @@ module GPIO(
 			end
 		else
 			/* wb write */
-			if(wb_acc)
+			if(cs_i)
 				begin
 					ack <= 1'b1;
 					if(we_i)
-						case(adr_i[2])
-							1'b0:
-								reg_data <=  dat_i[7:0];
-							1'b1:
-								reg_ctrl <=  dat_i[7:0];
+						case(sel_i)
+							4'b0000: reg_data <=  dat_i[7:0];
+							4'b0010: reg_ctrl <=  dat_i[7:0];
 						endcase
 				end
 			else
@@ -55,20 +53,7 @@ module GPIO(
 				end
 	end
 
-	/* wb read */
-	reg[31:0] data;
-	always@(*)
-	begin
-		case(adr_i[2])
-			1'b0:
-				data = {24'b0,reg_data};
-			1'b1:
-				data = {24'b0,reg_ctrl};
-		endcase
-	end
-	
-
-	assign dat_o = data;
+	assign dat_o = {16'b0,reg_ctrl,reg_data};
 	assign gpio_pin[0] = reg_ctrl[0] ? reg_data[0] : 1'bz;
 	assign gpio_pin[1] = reg_ctrl[1] ? reg_data[1] : 1'bz;
 	assign gpio_pin[2] = reg_ctrl[2] ? reg_data[2] : 1'bz;
