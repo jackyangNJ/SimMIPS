@@ -170,6 +170,10 @@ wire kb_ack_o;
 /* rtc */
 wire rtc_ack_o;
 wire[31:0] rtc_dat_o;
+/* pit */
+wire pit_int_o;
+wire[31:0] pit_dat_o;
+wire pit_ack_o;
 
 /* slave 0 */
 wire pbus_slave_0_cyc_o,pbus_slave_0_stb_o,pbus_slave_0_we_o;
@@ -188,6 +192,11 @@ wire[3:0] pbus_slave_2_sel_o;
 wire pbus_slave_3_cyc_o,pbus_slave_3_stb_o,pbus_slave_3_we_o;
 wire[31:0] pbus_slave_3_adr_o,pbus_slave_3_dat_o;
 wire[3:0] pbus_slave_3_sel_o;
+
+/* slave 4 */
+wire pbus_slave_4_cyc_o,pbus_slave_4_stb_o,pbus_slave_4_we_o;
+wire[31:0] pbus_slave_4_adr_o,pbus_slave_4_dat_o;
+wire[3:0] pbus_slave_4_sel_o;
 
 BusSwitchPer Bus_Switch_Per(
 	.master_stb_i(biu_bus_per_stb_o),
@@ -232,7 +241,16 @@ BusSwitchPer Bus_Switch_Per(
 	.slave_3_we_o (pbus_slave_3_we_o),
 	.slave_3_adr_o(pbus_slave_3_adr_o),
 	.slave_3_dat_o(pbus_slave_3_dat_o),
-	.slave_3_sel_o(pbus_slave_3_sel_o)
+	.slave_3_sel_o(pbus_slave_3_sel_o),
+	
+	.slave_4_dat_i(pit_dat_o),
+	.slave_4_ack_i(pit_ack_o),
+	.slave_4_stb_o(pbus_slave_4_stb_o),
+	.slave_4_cyc_o(pbus_slave_4_cyc_o),
+	.slave_4_we_o (pbus_slave_4_we_o),
+	.slave_4_adr_o(pbus_slave_4_adr_o),
+	.slave_4_dat_o(pbus_slave_4_dat_o),
+	.slave_4_sel_o(pbus_slave_4_sel_o)
 );
 
 GPIO gpio(
@@ -299,5 +317,25 @@ rtc_top
 	.ack_o(rtc_ack_o),
 	.dat_o(rtc_dat_o)
 );
+
+pit_top
+#(
+	.CLOCK_FREQ (50000000),
+	.PIT_CLOCK_FREQ (14318180)
+) pit(
+	.clk_i(clk_per),
+	.rst_i(rst),
+	.stb_i(pbus_slave_4_stb_o),
+	.cyc_i(pbus_slave_4_cyc_o),
+	.sel_i(pbus_slave_4_sel_o),
+	.we_i (pbus_slave_4_we_o),
+	.adr_i(pbus_slave_4_adr_o),
+	.dat_i(pbus_slave_4_dat_o),
+	.ack_o(pit_ack_o),
+	.dat_o(pit_dat_o),
+	.int_o(pit_int_o)
+);
+
+
 endmodule
 

@@ -88,6 +88,7 @@ module rtc_top
 		.clk_i(hour_clk),
 		.rst_i(rst_i),
 		.dat_o(hour),
+		.increment_one_o()
 	);
 	
 	assign dat_o = {16'b0,data_out};
