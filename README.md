@@ -1,3 +1,3 @@
 MIPS-Verilog
 ============
-Welcome visit project wiki [MIPS-Verilog](https://github.com/jackyang74/MIPS-Verilog/wiki)
+Welcome visit [MIPS-Verilog wiki](https://github.com/jackyang74/MIPS-Verilog/wiki)
