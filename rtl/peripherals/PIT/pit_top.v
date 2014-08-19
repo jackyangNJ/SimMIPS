@@ -71,6 +71,8 @@ module pit_top
 								endcase
 						endcase
 				end
+			else
+				ack <= 0;
 	end
 
 	/* bus read */
