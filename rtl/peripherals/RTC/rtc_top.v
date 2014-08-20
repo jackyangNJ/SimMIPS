@@ -19,7 +19,7 @@ module rtc_top
 );
 
 	wire[7:0] second,minute,hour;
-	wire sencond_clk = (counter == CLOCK_FREQ);
+	
 	wire minute_clk,hour_clk;
 
 	/* bus write */
@@ -65,6 +65,7 @@ module rtc_top
 				counter <= counter + 1'b1;
 	end
 
+	wire sencond_clk = (counter == CLOCK_FREQ);
 	bcd #(
 	.MAX_NUM(8'h59)
 	)second_bcd(

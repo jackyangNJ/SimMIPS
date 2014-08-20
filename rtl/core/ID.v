@@ -132,11 +132,11 @@ module ID(
 	wire JumpLink_instr = (instr_JAL || instr_BGEZAL || instr_BLTZAL || instr_JALR);
 	wire Branch_instr = JumpLink_instr || instr_JR || instr_J || instr_BGEZ || instr_BLTZ || instr_BEQ || instr_BNE || instr_BGTZ || instr_BLEZ;
 	
-	assign id_pc_sel = ((id_bpu_pc!=id_br_addr) && ((id_instr[31:26]==6'd0 && id_instr[5:0]==6'd8) ||
+	assign id_pc_sel = ((id_bpu_pc!=id_br_addr) && (instr_JR || instr_JALR ||
 								(id_instr[31:26]==6'd1 && id_instr[20:17]==4'd0) ||
 								id_instr[31:26]==6'd2 || id_instr[31:28]==4'd1 || instr_JAL)) ? 1'b1 : 1'b0;
 	
-	assign id_bpu_wen[1] = ((id_bpu_pc!=id_br_addr) && ((id_instr[31:26]==6'd0 && id_instr[5:0]==6'd8) ||
+	assign id_bpu_wen[1] = ((id_bpu_pc!=id_br_addr) && (instr_JR || instr_JALR || 
 									(id_instr[31:26]==6'd1 && id_instr[20:17]==4'd0) || instr_JAL ||
 									id_instr[31:26]==6'd2 || id_instr[31:28]==4'd1)) ? 1'b1 : 1'b0;
 	

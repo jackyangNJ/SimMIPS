@@ -83,7 +83,7 @@
 `define TAIL_JALR  	(6'b001001)
 `define TAIL_MOVZ  	(6'b001010)
 `define TAIL_MOVN  	(6'b001011)
-`define TAIL_SYSCALL (6'b001100)
+`define TAIL_SYSCALL(6'b001100)
 `define TAIL_MFHI 	(6'b010000)
 `define TAIL_MTHI 	(6'b010001)
 `define TAIL_MFLO 	(6'b010010)

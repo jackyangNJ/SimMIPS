@@ -14,6 +14,7 @@ wire clk_core = external_clk_i;
 wire clk_per  = external_clk_i;
 wire clk_uart = external_clk_i;
 wire rst = external_rst_i;
+
 wire[31:0] core_dphy_addr_o,core_iphy_addr_o;
 wire[31:0] core_data_o;
 wire       core_data_wr_o;
@@ -27,6 +28,8 @@ wire[31:0] biu_ibus_memory_data_o,biu_dbus_peripheral_data_o,biu_dbus_memory_dat
 
 wire[31:0] mbus_dat_o,pbus_dat_o;
 wire mbus_ack_o,pbus_ack_o;
+
+wire pic_master_int_o;
 
 pipeline_core core(
 	.clk(clk_core),
@@ -53,7 +56,7 @@ pipeline_core core(
 	.dcache_en_o(core_dcache_en_o),
 	.dcache_data_i(32'b0),
 	.dcache_data_ready_i(1'b0),
-	.hw_interrupt0_i(1'b0),
+	.hw_interrupt0_i(pic_master_int_o),
 	.hw_interrupt1_i(1'b0),
 	.hw_interrupt2_i(1'b0),
 	.hw_interrupt3_i(1'b0),
@@ -174,6 +177,14 @@ wire[31:0] rtc_dat_o;
 wire pit_int_o;
 wire[31:0] pit_dat_o;
 wire pit_ack_o;
+/* pic master */
+wire[31:0] pic_master_dat_o;
+wire pic_master_ack_o;
+
+/* pic slave */
+wire pic_slave_int_o;
+wire[31:0] pic_slave_dat_o;
+wire pic_slave_ack_o;
 
 /* slave 0 */
 wire pbus_slave_0_cyc_o,pbus_slave_0_stb_o,pbus_slave_0_we_o;
@@ -197,6 +208,15 @@ wire[3:0] pbus_slave_3_sel_o;
 wire pbus_slave_4_cyc_o,pbus_slave_4_stb_o,pbus_slave_4_we_o;
 wire[31:0] pbus_slave_4_adr_o,pbus_slave_4_dat_o;
 wire[3:0] pbus_slave_4_sel_o;
+
+/* slave 5 */
+wire pbus_slave_5_cyc_o,pbus_slave_5_stb_o,pbus_slave_5_we_o;
+wire[31:0] pbus_slave_5_adr_o,pbus_slave_5_dat_o;
+wire[3:0] pbus_slave_5_sel_o;
+/* slave 6 */
+wire pbus_slave_6_cyc_o,pbus_slave_6_stb_o,pbus_slave_6_we_o;
+wire[31:0] pbus_slave_6_adr_o,pbus_slave_6_dat_o;
+wire[3:0] pbus_slave_6_sel_o;
 
 BusSwitchPer Bus_Switch_Per(
 	.master_stb_i(biu_bus_per_stb_o),
@@ -250,7 +270,25 @@ BusSwitchPer Bus_Switch_Per(
 	.slave_4_we_o (pbus_slave_4_we_o),
 	.slave_4_adr_o(pbus_slave_4_adr_o),
 	.slave_4_dat_o(pbus_slave_4_dat_o),
-	.slave_4_sel_o(pbus_slave_4_sel_o)
+	.slave_4_sel_o(pbus_slave_4_sel_o),
+	
+	.slave_5_dat_i(pic_master_dat_o),
+	.slave_5_ack_i(pic_master_ack_o),
+	.slave_5_stb_o(pbus_slave_5_stb_o),
+	.slave_5_cyc_o(pbus_slave_5_cyc_o),
+	.slave_5_we_o (pbus_slave_5_we_o),
+	.slave_5_adr_o(pbus_slave_5_adr_o),
+	.slave_5_dat_o(pbus_slave_5_dat_o),
+	.slave_5_sel_o(pbus_slave_5_sel_o),
+	
+	.slave_6_dat_i(pic_slave_dat_o),
+	.slave_6_ack_i(pic_slave_ack_o),
+	.slave_6_stb_o(pbus_slave_6_stb_o),
+	.slave_6_cyc_o(pbus_slave_6_cyc_o),
+	.slave_6_we_o (pbus_slave_6_we_o),
+	.slave_6_adr_o(pbus_slave_6_adr_o),
+	.slave_6_dat_o(pbus_slave_6_dat_o),
+	.slave_6_sel_o(pbus_slave_6_sel_o)
 );
 
 GPIO gpio(
@@ -336,6 +374,34 @@ pit_top
 	.int_o(pit_int_o)
 );
 
+pic_top pic_master(
+	.clk_i(clk_per),
+	.rst_i(rst),
+	.stb_i(pbus_slave_5_stb_o),
+	.cyc_i(pbus_slave_5_cyc_o),
+	.sel_i(pbus_slave_5_sel_o),
+	.we_i (pbus_slave_5_we_o),
+	.adr_i(pbus_slave_5_adr_o),
+	.dat_i(pbus_slave_5_dat_o),
+	.ack_o(pic_master_ack_o),
+	.dat_o(pic_master_dat_o),
+	.int_o(pic_master_int_o),
+	.irq_i({3'b0,uart_int_o,1'b0,pic_slave_int_o,kb_int_o,pit_int_o})
+);
 
+pic_top pic_slave(
+	.clk_i(clk_per),
+	.rst_i(rst),
+	.stb_i(pbus_slave_6_stb_o),
+	.cyc_i(pbus_slave_6_cyc_o),
+	.sel_i(pbus_slave_6_sel_o),
+	.we_i (pbus_slave_6_we_o),
+	.adr_i(pbus_slave_6_adr_o),
+	.dat_i(pbus_slave_6_dat_o),
+	.ack_o(pic_slave_ack_o),
+	.dat_o(pic_slave_dat_o),
+	.int_o(pic_slave_int_o),
+	.irq_i(8'b0)
+);
 endmodule
 
