@@ -212,16 +212,7 @@ wire pause = mmu_cpu_pause_o | mdu_pipeline_stall;
 
 wire	overflow = ex_of_ctrl & ex_alu_of;
 
-    Multi_4 #(
-      .DATA_WIDTH (32)
-	)id_br_addr_sel(
-		.a(id_pc_4_out),
-		.b(id_bra_addr),
-		.c(id_rs_out),
-		.d(id_jaddr_out),
-		.sel(id_bra_addr_sel),
-		.data(id_br_addr)
-	);
+
 
 
 CU	b2v_inst18(
@@ -458,6 +449,17 @@ ID	instr_decode(
 	.instr_tlbwi_o(instr_tlbwi_o)
 	);
 
+    Multi_4 #(
+      .DATA_WIDTH (32)
+	)id_br_addr_sel(
+		.a(id_pc_4_out),
+		.b(id_bra_addr),
+		.c(id_a),
+		.d(id_jaddr_out),
+		.sel(id_bra_addr_sel),
+		.data(id_br_addr)
+	);
+	
 GPRs	b2v_inst11(
 	.clk(clk),
 	.wr_regwr(wr_regwr),
