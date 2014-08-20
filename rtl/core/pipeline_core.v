@@ -118,6 +118,7 @@ module pipeline_core(
 	wire        cp0_wen_o;
 	wire[4:0]   cp0_addr_o;
 	wire        instr_tlbp_o,instr_tlbr_o,instr_tlbwr_o,instr_tlbwi_o;
+	wire        id_is_instr_branch_o;
 	
 	/* CP0 */
 	wire cp0_interrupt_o;
@@ -219,6 +220,7 @@ CU	b2v_inst18(
 	.pause(pause),
 	.id_instr(id_instr),
 	.ex_memtoreg(ex_memtoreg),
+	.is_instr_branch_i(id_is_instr_branch_o),
 	.id_bpu_wen_h(id_bpu_wen_h),
 	.ex_regdst_addr(ex_regdst_addr),
 	.pa_pc_ifid_o(pa_pc_ifid_o),
@@ -446,7 +448,8 @@ ID	instr_decode(
 	.instr_tlbp_o(instr_tlbp_o),
 	.instr_tlbr_o(instr_tlbr_o),
 	.instr_tlbwr_o(instr_tlbwr_o),
-	.instr_tlbwi_o(instr_tlbwi_o)
+	.instr_tlbwi_o(instr_tlbwi_o),
+	.is_instr_branch_o(id_is_instr_branch_o)
 	);
 
     Multi_4 #(
@@ -716,7 +719,7 @@ Ext_Branch	b2v_inst7(
 
 
 Adder	id_bra_addr_adder(
-	.a(id_pc_out),
+	.a(id_pc_4_out),
 	.b(id_bra_imm),
 	.result(id_bra_addr));
 

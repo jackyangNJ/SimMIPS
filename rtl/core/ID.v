@@ -33,12 +33,13 @@ module ID(
 	//mtc0,mfc0
 	output cp0_wen_o,
 	output [4:0] cp0_addr_o,
-	
 	/* MMU */
 	output instr_tlbp_o,
 	output instr_tlbr_o,
 	output instr_tlbwr_o,
-	output instr_tlbwi_o
+	output instr_tlbwi_o,
+	/* instruction propertiese*/
+	output is_instr_branch_o
 );
 	wire [5:0] instr_op = id_instr[31:26];
 	wire [5:0] instr_tail = id_instr[5:0];
@@ -132,23 +133,20 @@ module ID(
 	wire JumpLink_instr = (instr_JAL || instr_BGEZAL || instr_BLTZAL || instr_JALR);
 	wire Branch_instr = JumpLink_instr || instr_JR || instr_J || instr_BGEZ || instr_BLTZ || instr_BEQ || instr_BNE || instr_BGTZ || instr_BLEZ;
 	
-	assign id_pc_sel = ((id_bpu_pc!=id_br_addr) && (instr_JR || instr_JALR ||
-								(id_instr[31:26]==6'd1 && id_instr[20:17]==4'd0) ||
-								id_instr[31:26]==6'd2 || id_instr[31:28]==4'd1 || instr_JAL)) ? 1'b1 : 1'b0;
+	assign id_pc_sel = ((id_bpu_pc!=id_br_addr) && Branch_instr) ? 1'b1 : 1'b0;
 	
-	assign id_bpu_wen[1] = ((id_bpu_pc!=id_br_addr) && (instr_JR || instr_JALR || 
-									(id_instr[31:26]==6'd1 && id_instr[20:17]==4'd0) || instr_JAL ||
-									id_instr[31:26]==6'd2 || id_instr[31:28]==4'd1)) ? 1'b1 : 1'b0;
+	assign id_bpu_wen[1] = ((id_bpu_pc!=id_br_addr) &&  Branch_instr) ? 1'b1 : 1'b0;
 	
-	assign id_bpu_wen[0] = ((id_bpu_pc!=id_br_addr) && ((id_instr[31:26]==6'd0 && id_instr[5:0]==6'd8) ||
-									(id_instr[31:26]==6'd1 && id_instr[20:16]==5'd1 && !id_compare[2]) ||
-									(id_instr[31:26]==6'd1 && id_instr[20:16]==5'd0 && id_compare[2]) ||
-									id_instr[31:26]==6'd2 || 
-									instr_JAL ||
-									(id_instr[31:26]==6'd4 && id_compare[0]) ||
-									(id_instr[31:26]==6'd5 && !id_compare[0]) ||
-									(id_instr[31:26]==6'd6 && (id_compare[2] || id_compare[1])) ||
-									(id_instr[31:26]==6'd7 && (!id_compare[2] && !id_compare[1])))) ? 1'b1 : 1'b0;
+	assign id_bpu_wen[0] = ((id_bpu_pc!=id_br_addr) && 
+									(instr_JR   || instr_JALR      ||
+									(instr_BGEZ && !id_compare[2]) ||
+									(instr_BLTZ && id_compare[2])  ||
+									instr_J     || instr_JAL       ||
+									(instr_BEQ && id_compare[0])   ||
+									(instr_BNE && !id_compare[0])  ||
+									(instr_BLEZ && (id_compare[2]  || id_compare[1])) ||
+									(instr_BGTZ && (!id_compare[2] && !id_compare[1])))
+							) ? 1'b1 : 1'b0;
 	
 	assign selpc = (cp0_interrupt_i || instr_SYSCALL || cp0_exception_tlb_i) ? 2'b10 :
 										   instr_ERET ? 2'b01 : 2'b0;
@@ -244,6 +242,8 @@ module ID(
 	assign instr_tlbwr_o = instr_TLBWR;
 	assign instr_tlbwi_o = instr_TLBWI;
 
+	/* instruction properties */
+	assign is_instr_branch_o = Branch_instr;
 endmodule
 
 

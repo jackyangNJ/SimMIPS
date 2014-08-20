@@ -309,7 +309,7 @@ uart_top uart_16550(
 	.wb_clk_i(clk_uart), 
 	// Wishbone signals
 	.wb_rst_i(rst),
-	.wb_adr_i(pbus_slave_1_adr_o[4:0]),
+	.wb_adr_i({2'b0,pbus_slave_1_adr_o[2:0]}),
 	.wb_dat_i(pbus_slave_1_dat_o),
 	.wb_we_i (pbus_slave_1_we_o),
 	.wb_stb_i(pbus_slave_1_stb_o),

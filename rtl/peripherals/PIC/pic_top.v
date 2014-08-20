@@ -180,6 +180,6 @@ module pic_top(
 	assign dat_o = (sel_i == 4'b0001) ? {24'b0,bus_data_out} : 
 				   (sel_i == 4'b0010) ? {16'b0,bus_data_out,8'b0} : 0;
 	assign ack_o = ack;
-	assign int_o = &reg_isr;
+	assign int_o = |reg_isr;
 
 endmodule
