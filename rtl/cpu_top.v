@@ -1,18 +1,23 @@
-module cpu_top(
+module cpu_top
+#(
+	parameter EXT_CLOCK_FREQ = 50000000
+)
+(
 	input external_clk_i,
 	input external_rst_i,
 	input uart_rx_i,
 	output uart_tx_o,
-	inout[7:0] gpio_pin,
+	inout[31:0] gpio_pin,
 	input kb_clk_i,
 	input kb_dat_i
 );
+
 
 /*globa signals*/
 wire clk_core = external_clk_i;
 // wire clk_bus  = external_clk_i;
 wire clk_per  = external_clk_i;
-wire clk_uart = external_clk_i;
+
 wire rst = external_rst_i;
 
 wire[31:0] core_dphy_addr_o,core_iphy_addr_o;
@@ -291,7 +296,7 @@ BusSwitchPer Bus_Switch_Per(
 	.slave_6_sel_o(pbus_slave_6_sel_o)
 );
 
-GPIO gpio(
+gpio_top gpio(
 	.clk_i(clk_per),
 	.rst_i(rst),
 	.cyc_i(pbus_slave_0_cyc_o),
@@ -305,6 +310,16 @@ GPIO gpio(
 	.gpio_pin(gpio_pin)
 );
 
+	wire clk_uart;
+	clock_generator #(
+		.CLOCK_IN_FREQ   (EXT_CLOCK_FREQ),
+		.CLOCK_OUT_FREQ  (1843200)
+	) uart_clock(
+		.clk_i(clk_per),
+		.rst_i(rst),
+		.clk_o(clk_uart)
+	);
+	
 uart_top uart_16550(
 	.wb_clk_i(clk_uart), 
 	// Wishbone signals
@@ -358,8 +373,7 @@ rtc_top
 
 pit_top
 #(
-	.CLOCK_FREQ (50000000),
-	.PIT_CLOCK_FREQ (14318180)
+	.CLOCK_FREQ (50000000)
 ) pit(
 	.clk_i(clk_per),
 	.rst_i(rst),

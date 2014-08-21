@@ -19,7 +19,7 @@ module kb_scan(
 	always@(posedge clk_i)
 	begin
 		if(rst_i)  //reset 
-			begin	
+			begin
 				count<=0;
 				code<=0;
 				buffer<=0;
@@ -38,7 +38,7 @@ module kb_scan(
 				else
 					begin
 						buffer[count] <= kb_dat_i;
-						count <= count+4'b1;
+						count <= count + 1'b1;
 					end
 			else
 				ready <= 0;

@@ -3,8 +3,7 @@
  */
 module pit_top
 #(
-	parameter CLOCK_FREQ = 50000000,
-	parameter PIT_CLOCK_FREQ = 14318180
+	parameter CLOCK_FREQ = 50000000
 )
 (
 	input clk_i,
@@ -25,6 +24,7 @@ module pit_top
 	reg[7:0] reg_mode;
 	reg [15:0] reg_divisor; 
 	
+	localparam PIT_CLOCK_FREQ = 14318180;
 	localparam MODE_DEFAULT = 8'h34;
 	localparam ST_IDLE  = 2'd0;
 	localparam ST_WR_LO = 2'd1;
