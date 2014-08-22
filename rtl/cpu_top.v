@@ -310,18 +310,10 @@ gpio_top gpio(
 	.gpio_pin(gpio_pin)
 );
 
-	wire clk_uart;
-	clock_generator #(
-		.CLOCK_IN_FREQ   (EXT_CLOCK_FREQ),
-		.CLOCK_OUT_FREQ  (1843200)
-	) uart_clock(
-		.clk_i(clk_per),
-		.rst_i(rst),
-		.clk_o(clk_uart)
-	);
+
 	
 uart_top uart_16550(
-	.wb_clk_i(clk_uart), 
+	.wb_clk_i(clk_per), 
 	// Wishbone signals
 	.wb_rst_i(rst),
 	.wb_adr_i({2'b0,pbus_slave_1_adr_o[2:0]}),

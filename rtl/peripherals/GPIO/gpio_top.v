@@ -67,15 +67,6 @@ module gpio_top(
 	endgenerate
 
 	assign dat_o = adr_i[2] ? reg_ctrl : reg_data;
-	// assign gpio_pin[0] = reg_ctrl[0] ? reg_data[0] : 1'bz;
-	// assign gpio_pin[1] = reg_ctrl[1] ? reg_data[1] : 1'bz;
-	// assign gpio_pin[2] = reg_ctrl[2] ? reg_data[2] : 1'bz;
-	// assign gpio_pin[3] = reg_ctrl[3] ? reg_data[3] : 1'bz;
-	// assign gpio_pin[4] = reg_ctrl[4] ? reg_data[4] : 1'bz;
-	// assign gpio_pin[5] = reg_ctrl[5] ? reg_data[5] : 1'bz;
-	// assign gpio_pin[6] = reg_ctrl[6] ? reg_data[6] : 1'bz;
-	// assign gpio_pin[7] = reg_ctrl[7] ? reg_data[7] : 1'bz;
-	
 	assign ack_o = ack;
 	
 endmodule
