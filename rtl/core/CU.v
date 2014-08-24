@@ -40,7 +40,7 @@ reg wash_idex,wash_exmem,wash_memwr,wash_ifid;
 						(instr_tail == `TAIL_SUBU) || (instr_tail == `TAIL_SLT) || (instr_tail == `TAIL_SLTU) || (instr_tail == `TAIL_AND) ||
 						(instr_tail == `TAIL_NOR) || (instr_tail == `TAIL_OR) || (instr_tail == `TAIL_XOR) || (instr_tail == `TAIL_SLL) ||
 						(instr_tail == `TAIL_SLLV) || (instr_tail == `TAIL_SRA) || (instr_tail == `TAIL_SRAV) || (instr_tail == `TAIL_SRL) ||
-						(instr_tail == `TAIL_SRLV))) || (instr_op == `OP_SW) || (instr_op == `OP_BEQ) || (instr_op == `OP_BNE) ||
+						(instr_tail == `TAIL_SRLV))) || (instr_op == `OP_SW) ||(instr_op == `OP_SH) ||(instr_op == `OP_SB) || (instr_op == `OP_BEQ) || (instr_op == `OP_BNE) ||
 						((instr_op == `OP_COP0) && (instr_rs == `RS_MT));
 	
 	//ADD、ADDU、CLO、CLZ、SLT、SLTU、SUB、SUBU、AND、NOR、OR、XOR、Jr、LW、SW、
@@ -51,7 +51,9 @@ reg wash_idex,wash_exmem,wash_memwr,wash_ifid;
 						(instr_tail == `TAIL_SRAV) || (instr_tail == `TAIL_SRLV) || (instr_tail == `TAIL_JR))) ||
 						((instr_op == `OP_SPECIAL2) && ((instr_tail == `TAIL_CLO) || (instr_tail == `TAIL_CLZ))) ||
 						((instr_op == `OP_REGIMM) && ((instr_rt == `RT_BGEZ) || (instr_rt == `RT_BLTZ))) ||
-						(instr_op == `OP_LW) || (instr_op == `OP_SW) || (instr_op == `OP_BEQ) || (instr_op == `OP_BNE) ||
+						(instr_op == `OP_SW) || (instr_op == `OP_SH) ||(instr_op == `OP_SB) ||
+						(instr_op == `OP_LW) || (instr_op == `OP_LB) || (instr_op == `OP_LH) || (instr_op == `OP_LHU) || (instr_op == `OP_LBU) || 
+						(instr_op == `OP_BEQ) || (instr_op == `OP_BNE) ||
 						(instr_op == `OP_BGTZ) || (instr_op == `OP_BLEZ) || (instr_op == `OP_ADDI) || (instr_op == `OP_ADDIU) ||
 						(instr_op == `OP_SLTI) || (instr_op == `OP_SLTIU) || (instr_op == `OP_ANDI) || (instr_op == `OP_ORI) ||
 						(instr_op == `OP_XORI);
