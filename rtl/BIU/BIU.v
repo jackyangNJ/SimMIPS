@@ -144,6 +144,7 @@ module BIU(
 		endcase
 	end
 	
+	/* to cpu core */
 	assign ibus_memory_data_o = ibus_mem_dat;
 	assign dbus_memory_data_o = dbus_data;
 	assign dbus_peripheral_data_o = dbus_data;

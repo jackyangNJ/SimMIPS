@@ -23,7 +23,7 @@ module pic_top(
 	localparam ST_POLL = 3'd5;
 	localparam ST_IRR  = 3'd6;
 	localparam ST_ISR  = 3'd7;
-	
+
 
 	/* internal registers */
 	reg[7:0] reg_command;

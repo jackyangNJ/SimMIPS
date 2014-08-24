@@ -28,17 +28,42 @@ public class MainFrame extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        baudRateJCB = new javax.swing.JComboBox();
+        selectFileJBT = new javax.swing.JButton();
+        sendElfJBT = new javax.swing.JButton();
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+
+        baudRateJCB.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "115200", "9600", " " }));
+
+        selectFileJBT.setText("selectFile");
+
+        sendElfJBT.setText("sendELF");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(selectFileJBT)
+                .addGap(18, 18, 18)
+                .addComponent(baudRateJCB, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(75, 75, 75)
+                .addComponent(sendElfJBT)
+                .addGap(67, 67, 67))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(24, 24, 24)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(selectFileJBT)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(2, 2, 2)
+                        .addComponent(baudRateJCB))
+                    .addComponent(sendElfJBT))
+                .addGap(253, 253, 253))
         );
 
         pack();
@@ -80,5 +105,8 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox baudRateJCB;
+    private javax.swing.JButton selectFileJBT;
+    private javax.swing.JButton sendElfJBT;
     // End of variables declaration//GEN-END:variables
 }

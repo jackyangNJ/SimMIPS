@@ -1,9 +1,11 @@
-module SSRAM
+module ssram_top
 (
 	input clk_i,
 	input rst_i,
-	input cs_i,
+	input stb_i,
 	input we_i,
+	input cyc_i,
+	input [3:0] sel_i,
 	input [31:0]dat_i,
 	input [31:0]adr_i,
 	output reg [31:0] dat_o,
@@ -27,19 +29,20 @@ module SSRAM
 
 
 	reg [2:0]counter;
-	parameter IDLE = 3'd0, WRITE1 = 3'd1, WRITE2 = 3'd2, READ1 = 3'd3, READ2 = 3'd4, READ3 = 3'd5, WAIT = 3'd6;
+	localparam IDLE = 3'd0, WRITE1 = 3'd1, WRITE2 = 3'd2, READ1 = 3'd3, READ2 = 3'd4, READ3 = 3'd5, WAIT = 3'd6;
 	reg dataout;
-
+	
+	wire cs_i = stb_i & cyc_i;
 	always @ (posedge clk_i) begin
 	if(rst_i)
 	begin
 		counter<=0;
 		ack_o <= 1'b0;
-	end	
+	end
 	else
 	begin
 		case (counter)
-		IDLE: begin			
+		IDLE: begin
 			if (cs_i) begin
 				if (we_i)
 					counter <= WRITE1;
@@ -47,18 +50,10 @@ module SSRAM
 					counter <= READ1;
 			end
 		end
-		WRITE1: begin
-			counter <= WRITE2;
-		end
-		WRITE2: begin
-			counter <= WAIT;
-		end
-		READ1: begin
-			counter <= READ2;
-		end
-		READ2: begin
-			counter <= READ3;
-		end
+		WRITE1: counter <= WRITE2;
+		WRITE2: counter <= WAIT;
+		READ1:  counter <= READ2;
+		READ2:  counter <= READ3;
 		READ3: begin
 			dat_o <= SRAM_DQ;
 			counter <= WAIT;
@@ -142,6 +137,7 @@ module SSRAM
 	assign oSRAM_ADV_N = 1'b1;
 	assign oSRAM_ADSP_N = 1'b1;
 	assign oSRAM_GW_N = 1'b1;
-	assign oSRAM_BE_N = 4'b0;
+	assign oSRAM_BE_N = ~sel_i;
 	
 endmodule
+	

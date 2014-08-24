@@ -1,14 +1,16 @@
-module SDRAM(
+module sdram_top(
 	input clk_sys,
 	input clk_ram,
 	input rst_i,
-	input cs_i,
+	input stb_i,
+	input cyc_i,
 	input we_i,
+	input [3:0] sel_i,
 	input [31:0]dat_i,
 	input [31:0]adr_i,
-	inout [31:0]DRAM_DQ,
 	output ack_o,
 	output [31:0]dat_o,
+	inout [31:0]DRAM_DQ,
 	output [12:0]oDRAM0_A,
 	output [12:0]oDRAM1_A,
 	output oDRAM0_LDQM0, 
@@ -32,7 +34,7 @@ module SDRAM(
 );
 	wire dram_dq;
 	reg ack;
-	reg [31:0]data_o;
+	reg [31:0]ram2bus_data_buf;
 	reg [12:0]dram_a;
 	
 	
@@ -42,20 +44,20 @@ module SDRAM(
 	wire dram_cs_n;
 	
 	reg [3:0] Command;
-	reg [1:0]dram_dqm;
+	reg [3:0]dram_dqm;
 	reg [1:0]dram_ba;
 	
 	reg [2:0]external_state;
 	reg [2:0]internal_state;
 	
-	reg [4:0]counter;						
+	reg [4:0]counter;
 	reg [14:0]timer;
 	
-	parameter INIT=3'd0,RUN=3'd1,READ=3'd2,WRITE=3'd3,PRECHARGE=3'd4;
-	parameter C_NOP=4'b0111,C_DESL=4'b1000,C_PRE=4'b0010,C_REF=4'b0001,C_MRS=4'b0000,C_READ=4'b0101,C_WRITE=4'b0100,C_ACT=4'b0011;
+	localparam INIT=3'd0,RUN=3'd1,READ=3'd2,WRITE=3'd3,PRECHARGE=3'd4;
+	localparam C_NOP=4'b0111,C_DESL=4'b1000,C_PRE=4'b0010,C_REF=4'b0001,C_MRS=4'b0000,C_READ=4'b0101,C_WRITE=4'b0100,C_ACT=4'b0011;
 	
 	
-	
+	wire cs_i = stb_i & cyc_i;
 	always @ (posedge clk_sys) begin
 		if (rst_i) begin
 			external_state <= INIT;
@@ -103,13 +105,13 @@ module SDRAM(
 					RUN: begin	//run
 						case(internal_state)
 							3'd0: begin
-								timer <= timer + 1'b1;					
+								timer <= timer + 1'b1;
 								if (timer >= 700) begin   //750
 									timer <= 15'd0;
 									internal_state <= 3'd1;
 								end
 								else begin
-									if(!cs_i) 	ack <= 1'b0;
+									if(!cs_i) ack <= 1'b0;
 									else begin
 										if(cs_i && !ack)
 											if (we_i == 1'b0) begin
@@ -136,15 +138,15 @@ module SDRAM(
 					end
 					
 					READ: begin //read
-						timer <= timer + 1'b1;					
+						timer <= timer + 1'b1;
 						case(internal_state)
-						3'd0:	internal_state <= 3'd1;
-						3'd1:	internal_state <= 3'd2;
+						3'd0: internal_state <= 3'd1;
+						3'd1: internal_state <= 3'd2;
 						3'd2: internal_state <= 3'd3;
-						3'd3:	begin internal_state <= 3'd4;	end
-						3'd4:	begin internal_state <= 3'd5;	end
-						3'd5: begin					
-						   data_o <= DRAM_DQ;
+						3'd3: begin internal_state <= 3'd4;	end
+						3'd4: begin internal_state <= 3'd5;	end
+						3'd5: begin
+							ram2bus_data_buf <= DRAM_DQ;
 							internal_state <= 3'd0;
 							external_state <= PRECHARGE;
 						end
@@ -153,7 +155,7 @@ module SDRAM(
 					end
 					
 					WRITE: begin //write
-						timer <= timer + 1'b1;					
+						timer <= timer + 1'b1;
 						case(internal_state)
 						3'd0:	internal_state <= 3'd1;
 						3'd1:	internal_state <= 3'd2;
@@ -169,7 +171,7 @@ module SDRAM(
 					end
 					
 					PRECHARGE: begin   /* PRECHARGE process */
-						timer <= timer + 1'b1;					
+						timer <= timer + 1'b1;
 						case(internal_state)
 							3'd0:	internal_state <= 3'd1;
 							3'd1:begin
@@ -191,35 +193,35 @@ module SDRAM(
 	
 	always @ (*) begin
 	begin
-		Command = C_NOP;	
+		Command = C_NOP;
 		dram_a=13'b0;
-		dram_dqm = 2'b11;
+		dram_dqm = 4'b1111;
 		dram_ba=2'b0;
 		case(external_state)
 			INIT:begin	
 					case(internal_state)
 					3'd0: begin		/* 200us C_NOP */
 						Command = C_NOP;		/* C_NOP */
-						dram_dqm = 2'b11;
+						dram_dqm = 4'b1111;
 					end
 					3'd1: begin  /* C_PRECHARGE all banks */
-						Command = C_PRE;		
+						Command = C_PRE;
 						dram_a[10] = 1'b1;
 					end
 					3'd2:	Command = C_NOP;		
 					3'd3: begin				/* 8 refresh*/
 						if(counter == 5'd0 && timer!=8)
-							Command = C_REF;		
+							Command = C_REF;
 						else	
-							Command = C_NOP;		
+							Command = C_NOP;
 					end
 					3'd4: begin   /* Set MODE Register*/
-						Command = C_MRS;		
+						Command = C_MRS;
 						dram_ba = 2'b00;
 						dram_a[12:0] = 13'b0001000100000;   //CAS latency 2
 					end
-					3'd5:	Command = C_NOP;		
-					default:	Command = C_NOP;		
+					3'd5:	Command = C_NOP;
+					default:	Command = C_NOP;
 			   endcase
 			end
 			
@@ -240,22 +242,22 @@ module SDRAM(
 				case(internal_state)
 					3'd0: begin
 						Command = C_ACT;		      /* command activation */
-						dram_a[12:0] = adr_i[23:11];			
-						dram_ba = adr_i[25:24];		
+						dram_a[12:0] = adr_i[23:11];
+						dram_ba = adr_i[25:24];
 					end
-					3'd1:	Command = C_NOP;		
+					3'd1:	Command = C_NOP;
 					3'd2: begin							/* Command read*/
-						dram_dqm = 2'b0;
-						Command = C_READ;		
+						dram_dqm = 0;
+						Command = C_READ;
 						dram_a[8:0] = adr_i[10:2];	
 						dram_a[10] = 1'b0;
 						dram_ba = adr_i[25:24];					
 					end
 					3'd3:begin
-							Command = C_NOP;		
-							dram_dqm = 2'b0;
+							Command = C_NOP;
+							dram_dqm = 0;
 						end
-					default:Command = C_NOP;		
+					default:Command = C_NOP;
 				endcase
 			end
 			
@@ -263,7 +265,7 @@ module SDRAM(
 				case(internal_state)
 					3'd0: begin									/* command activation */
 						Command = C_ACT;		
-						dram_a[12:0] = adr_i[23:11];			
+						dram_a[12:0] = adr_i[23:11];
 						dram_ba = adr_i[25:24];		
 					end
 					3'd1:	Command = C_NOP;	
@@ -271,13 +273,13 @@ module SDRAM(
 						if(counter == 5'd0)					
 							Command = C_WRITE;	
 						else
-							Command = C_NOP;	
-						dram_dqm = 2'd0;
-						dram_a[8:0] = adr_i[10:2];	
+							Command = C_NOP;
+						dram_dqm = ~sel_i;
+						dram_a[8:0] = adr_i[10:2];
 						dram_a[10] = 1'b0;
 						dram_ba = adr_i[25:24];
 					end
-					default:Command = C_NOP;		
+					default:Command = C_NOP;
 				endcase
 			end
 			
@@ -285,10 +287,10 @@ module SDRAM(
 				case(internal_state)
 					3'd0:begin
 						Command = C_PRE;	  /* Command precharge */
-						dram_a[10] = 1'b1;	
+						dram_a[10] = 1'b1;
 					end
-					3'd1:	Command = C_NOP;	
-					default:Command = C_NOP;		
+					3'd1:	Command = C_NOP;
+					default:Command = C_NOP;
 				endcase		
 			end
 			default: ;
@@ -299,14 +301,14 @@ end
 
 	assign {dram_cs_n,dram_ras_n,dram_cas_n,dram_we_n} = Command;
 	assign dram_dq = (external_state == WRITE);
-	assign DRAM_DQ = dram_dq ? dat_i : 32'bZ;				
-	assign dat_o = data_o;														
+	assign DRAM_DQ = dram_dq ? dat_i : 32'bZ;
+	assign dat_o = ram2bus_data_buf;
 	assign oDRAM0_A = dram_a;
 	assign oDRAM1_A = dram_a;
 	assign oDRAM0_LDQM0 = dram_dqm[0];
 	assign oDRAM0_UDQM1 = dram_dqm[1];
-	assign oDRAM1_LDQM0 = dram_dqm[0];
-	assign oDRAM1_UDQM1 = dram_dqm[1];
+	assign oDRAM1_LDQM0 = dram_dqm[2];
+	assign oDRAM1_UDQM1 = dram_dqm[3];
 	assign oDRAM0_WE_N = dram_we_n;
 	assign oDRAM1_WE_N = dram_we_n;
 	assign oDRAM0_CAS_N = dram_cas_n;

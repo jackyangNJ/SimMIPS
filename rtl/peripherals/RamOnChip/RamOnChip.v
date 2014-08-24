@@ -18,7 +18,7 @@ module RamOnChip(
 	always@(posedge clk_i)
 	begin
 		if(rst_i)
-			ack <= 1'b0;
+			ack <= 0;
 		else
 			if(cs)
 				ack <= 1'b1;
@@ -28,7 +28,7 @@ module RamOnChip(
 	
 	SinglePortRam ram(
 		.clk_i(clk_i),
-		.we_i(we_i),
+		.we_i(we_i & cs & !ack),
 		.adr_i(adr_i[13:2]),
 		.be_i(sel_i),
 		.dat_i(dat_i),

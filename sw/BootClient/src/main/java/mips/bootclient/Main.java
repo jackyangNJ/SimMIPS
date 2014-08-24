@@ -1,5 +1,7 @@
 package mips.bootclient;
 
+import de.tototec.cmdoption.CmdlineParser;
+
 /**
  *
  * @author yj
@@ -30,5 +32,12 @@ public class Main {
                 new MainFrame().setVisible(true);
             }
         });
+
+        Config config = new Config();
+        CmdlineParser cp = new CmdlineParser(config);
+        cp.parse(new String[]{"-v", "name1", "name2"});
+        assert config.verbose;
+        assert config.names.length() == 2;
+        assert config.options.isEmpty();
     }
 }

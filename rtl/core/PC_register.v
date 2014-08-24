@@ -10,7 +10,7 @@ module PC_register(
 	
 	always @ (posedge clk) begin
 		if (reset)
-			I_pc_out = 32'h8000_0000;
+			I_pc_out = 32'h9F00_0000;
 		else if (pa_pc_ifid == 1'b0)
 			I_pc_out = next_pc;
 	end

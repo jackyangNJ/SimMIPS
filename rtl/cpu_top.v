@@ -4,12 +4,48 @@ module cpu_top
 )
 (
 	input external_clk_i,
+	input clk_sdram,
 	input external_rst_i,
 	input uart_rx_i,
 	output uart_tx_o,
 	inout[31:0] gpio_pin,
 	input kb_clk_i,
-	input kb_dat_i
+	input kb_dat_i,
+	inout [31:0]DRAM_DQ,
+	output [12:0]oDRAM0_A,
+	output [12:0]oDRAM1_A,
+	output oDRAM0_LDQM0, 
+	output oDRAM0_UDQM1,
+	output oDRAM1_LDQM0,
+	output oDRAM1_UDQM1,
+	output oDRAM0_WE_N,
+	output oDRAM1_WE_N,
+	output oDRAM0_CAS_N,
+	output oDRAM1_CAS_N,
+	output oDRAM0_RAS_N,
+	output oDRAM1_RAS_N,
+	output oDRAM0_CS_N,
+	output oDRAM1_CS_N,
+	output [1:0]oDRAM0_BA,
+	output [1:0]oDRAM1_BA,
+	output oDRAM0_CLK,
+	output oDRAM1_CLK,
+	output oDRAM0_CKE,
+	output oDRAM1_CKE,
+	inout [31:0]SRAM_DQ,
+	inout [3:0]SRAM_DPA,
+	output  oSRAM_ADSP_N,
+	output  oSRAM_ADV_N,
+	output  oSRAM_CE2,
+	output  oSRAM_CE3_N,
+	output  oSRAM_CLK,
+	output  oSRAM_GW_N,
+	output  [18:0]oSRAM_A,
+	output  oSRAM_ADSC_N,
+	output [3:0]oSRAM_BE_N,
+	output  oSRAM_CE1_N,
+	output  oSRAM_OE_N,
+	output  oSRAM_WE_N
 );
 
 
@@ -115,14 +151,29 @@ BIU biu(
 //
 // memory peripheral signals
 //
+/*RamOnChip*/
 wire ram_ack_o;
 wire[31:0] ram_dat_o;
+/* sdram */
+wire sdram_ack_o;
+wire[31:0] sdram_dat_o;
+/* ssram */
+wire ssram_ack_o;
+wire[31:0] ssram_dat_o;
 
-
-
+/* ram on chip */
 wire mbus_slave_0_cyc_o,mbus_slave_0_stb_o,mbus_slave_0_we_o;
 wire[31:0] mbus_slave_0_adr_o,mbus_slave_0_dat_o;
 wire[3:0] mbus_slave_0_sel_o;
+
+/* sdram */
+wire mbus_slave_1_cyc_o,mbus_slave_1_stb_o,mbus_slave_1_we_o;
+wire[31:0] mbus_slave_1_adr_o,mbus_slave_1_dat_o;
+wire[3:0] mbus_slave_1_sel_o;
+/* ssram */
+wire mbus_slave_2_cyc_o,mbus_slave_2_stb_o,mbus_slave_2_we_o;
+wire[31:0] mbus_slave_2_adr_o,mbus_slave_2_dat_o;
+wire[3:0] mbus_slave_2_sel_o;
 
 BusSwitchMem Bus_Switch_Mem(
 
@@ -141,7 +192,25 @@ BusSwitchMem Bus_Switch_Mem(
 	.slave_0_we_o(mbus_slave_0_we_o),
 	.slave_0_adr_o(mbus_slave_0_adr_o),
 	.slave_0_dat_o(mbus_slave_0_dat_o),
-	.slave_0_sel_o(mbus_slave_0_sel_o)
+	.slave_0_sel_o(mbus_slave_0_sel_o),
+	
+	.slave_1_dat_i(sdram_dat_o),
+	.slave_1_ack_i(sdram_ack_o),
+	.slave_1_stb_o(mbus_slave_1_stb_o),
+	.slave_1_cyc_o(mbus_slave_1_cyc_o),
+	.slave_1_we_o(mbus_slave_1_we_o),
+	.slave_1_adr_o(mbus_slave_1_adr_o),
+	.slave_1_dat_o(mbus_slave_1_dat_o),
+	.slave_1_sel_o(mbus_slave_1_sel_o),
+	
+	.slave_2_dat_i(ssram_dat_o),
+	.slave_2_ack_i(ssram_ack_o),
+	.slave_2_stb_o(mbus_slave_2_stb_o),
+	.slave_2_cyc_o(mbus_slave_2_cyc_o),
+	.slave_2_we_o(mbus_slave_2_we_o),
+	.slave_2_adr_o(mbus_slave_2_adr_o),
+	.slave_2_dat_o(mbus_slave_2_dat_o),
+	.slave_2_sel_o(mbus_slave_2_sel_o)
 	);
 //
 // memory components
@@ -159,6 +228,68 @@ RamOnChip ram(
 	.ack_o(ram_ack_o)
 );
 
+sdram_top sdram(
+	.clk_sys(clk_per),
+	.clk_ram(clk_sdram),
+	.rst_i(rst),
+	.cyc_i(mbus_slave_1_cyc_o),
+	.stb_i(mbus_slave_1_stb_o),
+	.sel_i(mbus_slave_1_sel_o),
+	.adr_i(mbus_slave_1_adr_o),
+	.we_i (mbus_slave_1_we_o),
+	.dat_i(mbus_slave_1_dat_o),
+	.dat_o(sdram_dat_o),
+	.ack_o(sdram_ack_o),
+	.DRAM_DQ     (DRAM_DQ),
+	.oDRAM0_A    (oDRAM0_A),
+	.oDRAM1_A    (oDRAM1_A),
+	.oDRAM0_LDQM0(oDRAM0_LDQM0), 
+	.oDRAM0_UDQM1(oDRAM0_UDQM1),
+	.oDRAM1_LDQM0(oDRAM1_LDQM0),
+	.oDRAM1_UDQM1(oDRAM1_UDQM1),
+	.oDRAM0_WE_N (oDRAM0_WE_N),
+	.oDRAM1_WE_N (oDRAM1_WE_N),
+	.oDRAM0_CAS_N(oDRAM0_CAS_N),
+	.oDRAM1_CAS_N(oDRAM1_CAS_N),
+	.oDRAM0_RAS_N(oDRAM0_RAS_N),
+	.oDRAM1_RAS_N(oDRAM1_RAS_N),
+	.oDRAM0_CS_N (oDRAM0_CS_N),
+	.oDRAM1_CS_N (oDRAM1_CS_N),
+	.oDRAM0_BA   (oDRAM0_BA),
+	.oDRAM1_BA   (oDRAM1_BA),
+	.oDRAM0_CLK  (oDRAM0_CLK),
+	.oDRAM1_CLK  (oDRAM1_CLK),
+	.oDRAM0_CKE  (oDRAM0_CKE),
+	.oDRAM1_CKE  (oDRAM1_CKE)
+);
+
+ssram_top ssram(
+	.clk_i(clk_per),
+	.rst_i(rst),
+	.cyc_i(mbus_slave_2_cyc_o),
+	.stb_i(mbus_slave_2_stb_o),
+	.sel_i(mbus_slave_2_sel_o),
+	.adr_i(mbus_slave_2_adr_o),
+	.we_i (mbus_slave_2_we_o),
+	.dat_i(mbus_slave_2_dat_o),
+	.dat_o(ssram_dat_o),
+	.ack_o(ssram_ack_o),
+	/* SRAM signal */
+	.SRAM_DQ(SRAM_DQ),
+	.SRAM_DPA(SRAM_DPA),
+	.oSRAM_ADSP_N(oSRAM_ADSP_N),
+	.oSRAM_ADV_N(oSRAM_ADV_N),
+	.oSRAM_CE2(oSRAM_CE2),
+	.oSRAM_CE3_N(oSRAM_CE3_N),
+	.oSRAM_CLK(oSRAM_CLK),
+	.oSRAM_GW_N(oSRAM_GW_N),
+	.oSRAM_A(oSRAM_A),
+	.oSRAM_ADSC_N(oSRAM_ADSC_N),
+	.oSRAM_BE_N(oSRAM_BE_N),
+	.oSRAM_CE1_N(oSRAM_CE1_N),
+	.oSRAM_OE_N(oSRAM_OE_N),
+	.oSRAM_WE_N(oSRAM_WE_N)
+);
 //
 // peripheral signals
 //
@@ -349,7 +480,7 @@ kb_top kb(
 
 rtc_top  
 #(
-	.CLOCK_FREQ (50000000)
+	.CLOCK_FREQ (EXT_CLOCK_FREQ)
 )rtc(
 	.clk_i(clk_per),
 	.rst_i(rst),
@@ -365,7 +496,7 @@ rtc_top
 
 pit_top
 #(
-	.CLOCK_FREQ (50000000)
+	.CLOCK_FREQ (EXT_CLOCK_FREQ)
 ) pit(
 	.clk_i(clk_per),
 	.rst_i(rst),
