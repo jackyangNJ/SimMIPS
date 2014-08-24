@@ -17,7 +17,7 @@ input [31:0]	mdu_b_i;
 output [31:0] 	mdu_data_o;
 output mdu_pipeline_stall_o;
 
-	
+
 reg [31:0] reg_HI,reg_LO;
 reg sign;
 
@@ -157,7 +157,7 @@ end
 	) mdu_hi_sel(
 	.a(mdu_a_i),
 	.b(product_hi),
-	.c(quotient),
+	.c(remainder),
 	.sel(hilo_sel),
 	.data(hi_data)
 );
@@ -167,7 +167,7 @@ end
 	) mdu_lo_sel(
 	.a(mdu_a_i),
 	.b(product_lo),
-	.c(remainder),
+	.c(quotient),
 	.sel(hilo_sel),
 	.data(lo_data)
 );
