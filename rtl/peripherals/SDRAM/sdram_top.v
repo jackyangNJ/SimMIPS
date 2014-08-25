@@ -69,7 +69,7 @@ module sdram_top(
 		else
 			begin
 				case(external_state)
-					INIT:begin	
+					INIT:begin
 						case(internal_state)
 						3'd0: begin		/* 200us C_NOP */
 							timer <= timer + 1'b1;
@@ -111,7 +111,7 @@ module sdram_top(
 									internal_state <= 3'd1;
 								end
 								else begin
-									if(!cs_i) ack <= 1'b0;
+									if(!cs_i) ack <= 0;
 									else begin
 										if(cs_i && !ack)
 											if (we_i == 1'b0) begin
@@ -122,9 +122,8 @@ module sdram_top(
 													external_state <= WRITE;
 													internal_state <= 3'd0;
 											end
-									end		
-								end				
-								
+									end
+								end
 							end
 							3'd1: begin	
 								counter <= counter + 1'b1;

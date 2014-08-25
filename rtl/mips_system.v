@@ -45,12 +45,22 @@ module mips_system(
 	output  oSRAM_WE_N
 );
 
+wire clk_100;
+wire clk_100_sdram;
+wire clk_50;
+
+pll pll_entity(
+	.inclk0(iCLK_50),
+	.c0(clk_100_sdram),
+	.c1(clk_100),
+	.c2(clk_50)
+);
 
 cpu_top#(
 	.EXT_CLOCK_FREQ(50000000)
 ) cpu(
-	.external_clk_i(iCLK_50),
-	.clk_sdram(iCLK_50),
+	.external_clk_i(clk_50),
+	.clk_sdram(clk_100_sdram),
 	.external_rst_i(~iKEY[0]),
 	.uart_rx_i(iUART_RXD),
 	.uart_tx_o(oUART_TXD),
