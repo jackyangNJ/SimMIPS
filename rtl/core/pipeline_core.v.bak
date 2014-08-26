@@ -377,7 +377,7 @@ PC_register b2v_inst0(
 	
 BPU	bpu_inst(
 	.clk(clk),
-	.reset(reset),
+	.reset(reset),.
 	.pause_i(pause),
 	.id_bpu_index(id_bpu_index),
 	.id_bpu_wen(id_bpu_wen),

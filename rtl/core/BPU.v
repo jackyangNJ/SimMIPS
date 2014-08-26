@@ -1,6 +1,7 @@
 module BPU(
 	input clk,
 	input reset,
+	input pause_i,
 	input [31:0]if_pc_4_out,
 	input [1:0]id_bpu_wen,
 	input [31:0]if_new_pc,
@@ -52,7 +53,7 @@ end
 		else
 	//写入位有效时，将输入的项写入BPU中
 	//其中id_bpu_index是前一周期输出的if_bpu_index
-		if (id_bpu_wen[1])
+		if (id_bpu_wen[1] && !pause_i)
 		begin
 			saved_pc_4[id_bpu_index] = id_pc_4_out;
 			branch_target[id_bpu_index] = if_new_pc;

@@ -177,8 +177,8 @@ module sdram_top(
 									ack <= 1'b1;
 									external_state <= RUN;
 									internal_state <= 3'b0;
-									end	
-						endcase		
+									end
+						endcase
 					end
 					
 					default: begin
@@ -229,11 +229,11 @@ module sdram_top(
 					3'd0: Command = C_NOP;
 					3'd1: begin						/* refresh */
 						if(counter== 5'd0)
-							Command = C_REF;		
-						else	
-							Command = C_NOP;		
+							Command = C_REF;
+						else
+							Command = C_NOP;
 					end
-					default:Command = C_NOP;		
+					default:Command = C_NOP;
 				endcase
 			end
 			
@@ -248,9 +248,9 @@ module sdram_top(
 					3'd2: begin							/* Command read*/
 						dram_dqm = 0;
 						Command = C_READ;
-						dram_a[8:0] = adr_i[10:2];	
+						dram_a[8:0] = adr_i[10:2];
 						dram_a[10] = 1'b0;
-						dram_ba = adr_i[25:24];					
+						dram_ba = adr_i[25:24];
 					end
 					3'd3:begin
 							Command = C_NOP;
@@ -265,12 +265,12 @@ module sdram_top(
 					3'd0: begin									/* command activation */
 						Command = C_ACT;		
 						dram_a[12:0] = adr_i[23:11];
-						dram_ba = adr_i[25:24];		
+						dram_ba = adr_i[25:24];
 					end
-					3'd1:	Command = C_NOP;	
-					3'd2: begin									/* Command write*/					
-						if(counter == 5'd0)					
-							Command = C_WRITE;	
+					3'd1:	Command = C_NOP;
+					3'd2: begin									/* Command write*/
+						if(counter == 5'd0)
+							Command = C_WRITE;
 						else
 							Command = C_NOP;
 						dram_dqm = ~sel_i;
@@ -285,7 +285,7 @@ module sdram_top(
 			PRECHARGE: begin   /* PRECHARGE process */
 				case(internal_state)
 					3'd0:begin
-						Command = C_PRE;	  /* Command precharge */
+						Command = C_PRE;  /* Command precharge */
 						dram_a[10] = 1'b1;
 					end
 					3'd1:	Command = C_NOP;

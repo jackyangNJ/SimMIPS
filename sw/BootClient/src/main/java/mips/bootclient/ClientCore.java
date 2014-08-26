@@ -5,7 +5,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.util.logging.Level;
 import jssc.SerialPort;
+import jssc.SerialPortEvent;
+import jssc.SerialPortEventListener;
 import jssc.SerialPortException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,15 +18,38 @@ import org.apache.logging.log4j.Logger;
  *
  * @author jack
  */
-public class ClientCore {
+public class ClientCore implements SerialPortEventListener {
 
     static final Logger logger = LogManager.getLogger(ClientCore.class.getName());
 
     SerialPort serialPort;
-    public static final int MSG_ELF_TYPE = 0;
-    public static final int MSG_BOOT_TYPE = 1;
+    public static final int MSG_ELF_TYPE = 10;
+    public static final int MSG_BIN_TYPE = 11;
+    public static final int MSG_BOOT_TYPE = 12;
+    ByteBuffer lineBuf = ByteBuffer.allocate(10000);
 
     public boolean openSeriaPort(String portName, int portBaudRate) {
+        serialPort = new SerialPort(portName);
+        try {
+            serialPort.openPort();
+            //Set params. Also you can set params by this string: serialPort.setParams(9600, 8, 1, 0);
+            serialPort.setParams(portBaudRate,
+                    SerialPort.DATABITS_8,
+                    SerialPort.STOPBITS_1,
+                    SerialPort.PARITY_NONE);
+
+            //Set mask
+            int mask = SerialPort.MASK_RXCHAR;//Prepare mask
+            serialPort.setEventsMask(mask);
+
+            //Add SerialPortEventListener
+            serialPort.addEventListener(this);
+
+        }
+        catch (SerialPortException ex) {
+            logger.error(ex);
+            return false;
+        }
         return true;
     }
 
@@ -34,45 +61,66 @@ public class ClientCore {
      * @param addr
      * @return
      */
-    public boolean sendELF(String filePath, int addr) {
+    public boolean sendBIN(String filePath, long addr) {
         File file = new File(filePath);
-        InputStream in = null;
-        byte[] fileContents = null;
+        InputStream in;
+        byte[] fileContents;
+        int len;
         try {
             in = new FileInputStream(file);
-            in.read(fileContents,0,in.available());
-        } catch (FileNotFoundException ex) {
+            fileContents = new byte[in.available()];
+            len = in.read(fileContents, 0, in.available());
+            logger.info("file length = " + len);
+        }
+        catch (FileNotFoundException ex) {
             logger.error(ex);
             return false;
-        } catch (IOException ex) {
+        }
+        catch (IOException ex) {
             logger.error(ex);
             return false;
         }
 
-        if (fileContents.length != 0 && isSerialOpened()) {
+        if (len != 0 && isSerialOpened()) {
             try {
-                serialPort.writeInt(MSG_ELF_TYPE);
-                serialWriteLong(fileContents.length);
+                serialPort.writeInt(MSG_BIN_TYPE); // one byte
+                serialWriteLong(len);
                 serialWriteLong(addr);
-                serialPort.writeBytes(fileContents);
-            } catch (SerialPortException ex) {
+//                serialPort.writeBytes(fileContents);
+                for (int i = 0; i < len; i++) {
+                    serialPort.writeByte(fileContents[i]);
+                    Thread.sleep(10);
+                }
+
+            }
+            catch (SerialPortException ex) {
                 logger.error(ex);
+            }
+            catch (InterruptedException ex) {
+                java.util.logging.Logger.getLogger(ClientCore.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
         return true;
+
     }
 
     /**
-     * in little endian
+     * in little endian,send a int in 4 byte
      *
      * @param value
      */
-    private void serialWriteLong(int value) throws SerialPortException {
+    private void serialWriteLong(long value) throws SerialPortException {
         if (isSerialOpened()) {
-            serialPort.writeInt(value & 0xFF);
-            serialPort.writeInt(value & 0xFF00);
-            serialPort.writeInt(value & 0xFF0000);
-            serialPort.writeInt(value & 0xFF000000);
+            serialPort.writeInt((int) (value & 0xFF));
+            serialPort.writeInt((int) ((value >> 8) & 0xFF));
+
+            serialPort.writeInt((int) ((value >> 16) & 0xFF0000));
+            serialPort.writeInt((int) ((value >> 24) & 0xFF));
+
+//            logger.info((int) (value & 0xFF));
+//            logger.info((int) ((value >> 8) & 0xFF));
+//            logger.info((int) ((value >> 16) & 0xFF));
+//            logger.info((int) ((value >> 24) & 0xFF));
         }
     }
 
@@ -81,13 +129,14 @@ public class ClientCore {
      * @param addr CPU PC will jump to addr
      * @return
      */
-    public boolean sendBootAddr(int addr) {
+    public boolean sendBootAddr(long addr) {
 
         if (isSerialOpened()) {
             try {
                 serialPort.writeInt(MSG_BOOT_TYPE);
                 serialWriteLong(addr);
-            } catch (SerialPortException ex) {
+            }
+            catch (SerialPortException ex) {
                 logger.error(ex);
                 return false;
             }
@@ -109,11 +158,44 @@ public class ClientCore {
         if (isSerialOpened()) {
             try {
                 serialPort.closePort();
-            } catch (SerialPortException ex) {
+            }
+            catch (SerialPortException ex) {
                 logger.error(ex);
                 return false;
             }
         }
         return true;
     }
+
+    /**
+     *
+     * @param event
+     */
+    @Override
+    public void serialEvent(SerialPortEvent event) {
+        if (event.isRXCHAR()) {//If data is available
+            //Read data, if 10 bytes available 
+            try {
+                byte buffer[];
+                while (true) {
+                    buffer = serialPort.readBytes(1);
+                    if (buffer.length == 0) {
+                        break;
+                    }
+
+                    if (buffer[0] == '\n') {
+                        logger.info(new String(lineBuf.array(),0,lineBuf.position()));
+                        lineBuf.clear();
+                    } else {
+                        lineBuf.put(buffer);
+                    }
+                }
+            }
+            catch (SerialPortException ex) {
+                logger.error(ex);
+            }
+
+        }
+    }
+
 }

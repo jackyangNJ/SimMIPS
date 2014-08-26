@@ -1,10 +1,15 @@
 package mips.bootclient;
 
 import de.tototec.cmdoption.CmdOption;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -12,16 +17,26 @@ import java.util.Map;
  */
 class Config {
 
+    static final Logger logger = LogManager.getLogger(Config.class.getName());
+
+    
+
     @CmdOption(names = {"--help", "-h"}, description = "Show this help.", isHelp = true)
     public boolean help;
 
-    @CmdOption(names = {"--verbose", "-v"}, description = "Be more verbose.")
-    public boolean verbose;
+    @CmdOption(names = {"-addr"}, args = {"addr"}, maxCount = 1, minCount = 1, description = "Point to target addr(needed).")
+    public final String targetAddr = new String();
 
-    @CmdOption(names = {"--options", "-o"}, args = {"name", "value"}, maxCount = -1, description = "Additional options when processing names.")
-    public final Map<String, String> options = new LinkedHashMap<String, String>();
+    @CmdOption(names = {"-file", "-f"}, args = {"filePath"}, maxCount = 1, description = "Specify the file path to transfer file via seiral(Optional).")
+    public final String filePath = new String();
 
-    @CmdOption(args = {"file"}, description = "Names to process.", minCount = 1, maxCount = -1)
-    public final List<String> names = new LinkedList<String>();
+    @CmdOption(names = {"-serial", "-s"}, args = {"portName"}, minCount = -1, maxCount = 2, description = "Specify the serial port(Default:).")
+    public final String serialPortName = "COM3";
+    
+    @CmdOption(names = {"-rate", "-r"}, args = {"portBaudRate"}, minCount = -1, maxCount = 2, description = "Specify the serial baud rate(Default:).")
+    public final String serialPortBaudRate = "115200";
+
+    @CmdOption(args = {"extraParams"}, description = "additional parameters.",  maxCount = -1)
+    public final List<String> extraParams = new ArrayList<>();
 
 }

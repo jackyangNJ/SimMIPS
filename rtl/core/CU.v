@@ -1,6 +1,6 @@
 `include "CPUConstants.v"
 module CU(
-	input pause,
+	input pause_i,
 	input [31:0]id_instr,
 	input is_instr_branch_i,
 	input ex_memtoreg,
@@ -65,7 +65,7 @@ reg wash_idex,wash_exmem,wash_memwr,wash_ifid;
 	//pa_pcifid_o生成的优先级：外部暂停 > Load-Use > 其他
 	always@(*)
 	begin
-		if(pause == 1'b1)
+		if(pause_i == 1'b1)
 			pa_pc_ifid = 1'b1;
 		else if(load_use == 1'b1)
 			pa_pc_ifid = 1'b1;
@@ -76,7 +76,7 @@ reg wash_idex,wash_exmem,wash_memwr,wash_ifid;
 	//pa_idexmemwr_o生成的优先级：外部暂停 > 其他
 	always@(*)
 	begin
-		if(pause == 1'b1)
+		if(pause_i == 1'b1)
 			pa_idexmemwr = 1'b1;
 		else
 			pa_idexmemwr = 1'b0;
@@ -85,7 +85,7 @@ reg wash_idex,wash_exmem,wash_memwr,wash_ifid;
 	//wash_ifid_o生成的优先级：外部暂停 > Load-Use > SYSCALL、ERET > 外部中断 > 其他
 	always@(*)
 	begin
-		if(pause == 1'b1)
+		if(pause_i == 1'b1)
 			wash_ifid = 1'b0;
 		else
 		begin
@@ -114,7 +114,7 @@ reg wash_idex,wash_exmem,wash_memwr,wash_ifid;
 	//wash_idex的生成优先级：外部暂停 > Load-Use,data TLB exception > 其他
 	always@(*)
 	begin
-		if(pause == 1'b1)
+		if(pause_i == 1'b1)
 			wash_idex = 1'b0;
 		else 
 			if((cp0_exception_tlb_i && !cp0_exception_tlb_byinstr_i) || load_use)
@@ -127,7 +127,7 @@ reg wash_idex,wash_exmem,wash_memwr,wash_ifid;
 	begin
 		wash_exmem = 0;
 		wash_memwr = 0;
-		if(!pause)
+		if(!pause_i)
 			begin
 				if(cp0_exception_tlb_i && !cp0_exception_tlb_byinstr_i)
 					begin
@@ -141,7 +141,7 @@ reg wash_idex,wash_exmem,wash_memwr,wash_ifid;
 	//intr_en_o的生成
 	// always@(*)
 	// begin
-		// if((pause == 1'b1) || (load_use == 1'b1) ||	instr_SYSCALL || instr_ERET)
+		// if((pause_i == 1'b1) || (load_use == 1'b1) ||	instr_SYSCALL || instr_ERET)
 			// cu_intr = 1'b0;
 		// else
 		// begin
