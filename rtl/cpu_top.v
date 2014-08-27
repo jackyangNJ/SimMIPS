@@ -4,7 +4,8 @@ module cpu_top
 )
 (
 	input external_clk_i,
-	input clk_sdram,
+	input clk_sdram_i,
+	input clk_sdram_controller_i,
 	input external_rst_i,
 	input uart_rx_i,
 	output uart_tx_o,
@@ -229,8 +230,8 @@ RamOnChip ram(
 );
 
 sdram_top sdram(
-	.clk_sys(clk_per),
-	.clk_ram(clk_sdram),
+	.clk_sys(clk_sdram_controller_i),
+	.clk_ram(clk_sdram_i),
 	.rst_i(rst),
 	.cyc_i(mbus_slave_1_cyc_o),
 	.stb_i(mbus_slave_1_stb_o),

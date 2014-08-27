@@ -60,7 +60,8 @@ cpu_top#(
 	.EXT_CLOCK_FREQ(50000000)
 ) cpu(
 	.external_clk_i(clk_50),
-	.clk_sdram(clk_100_sdram),
+	.clk_sdram_i(clk_100_sdram),
+	.clk_sdram_controller_i(clk_100),
 	.external_rst_i(~iKEY[0]),
 	.uart_rx_i(iUART_RXD),
 	.uart_tx_o(oUART_TXD),

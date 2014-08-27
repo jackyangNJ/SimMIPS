@@ -1,3 +1,7 @@
+/*
+ * clk_sys must be 100MHz
+ * clk_ram must be 100MHZ with -65 degree skewing
+ */
 module sdram_top(
 	input clk_sys,
 	input clk_ram,
