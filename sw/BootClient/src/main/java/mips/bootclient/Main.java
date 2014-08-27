@@ -43,7 +43,7 @@ public class Main {
         }
 
         //send boot command
-        clientCore.sendBootAddr(Long.decode(config.targetAddr));
+        clientCore.sendBootAddr(Long.decode(config.entryAddr));
 
     }
 

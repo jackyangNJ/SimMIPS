@@ -87,17 +87,17 @@ public class ClientCore implements SerialPortEventListener {
                 serialWriteLong(len);
                 serialWriteLong(addr);
 //                serialPort.writeBytes(fileContents);
-                for (int i = 0; i < len; i++) {
-                    serialPort.writeByte(fileContents[i]);
-                    Thread.sleep(10);
+                for (byte b : fileContents) {
+                    serialPort.writeByte(b);
+                    try {
+                        Thread.sleep(1);
+                    } catch (InterruptedException ex) {
+                        java.util.logging.Logger.getLogger(ClientCore.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                 }
-
             }
             catch (SerialPortException ex) {
                 logger.error(ex);
-            }
-            catch (InterruptedException ex) {
-                java.util.logging.Logger.getLogger(ClientCore.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
         return true;
@@ -182,7 +182,6 @@ public class ClientCore implements SerialPortEventListener {
                     if (buffer.length == 0) {
                         break;
                     }
-
                     if (buffer[0] == '\n') {
                         logger.info(new String(lineBuf.array(),0,lineBuf.position()));
                         lineBuf.clear();
@@ -194,7 +193,6 @@ public class ClientCore implements SerialPortEventListener {
             catch (SerialPortException ex) {
                 logger.error(ex);
             }
-
         }
     }
 
