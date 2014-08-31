@@ -200,3 +200,7 @@ From,To,Assignment Name,Value,Enabled
 ,oSRAM_GW_N,Location,PIN_AG18,Yes
 ,oSRAM_OE_N,Location,PIN_AD18,Yes
 ,oSRAM_WE_N,Location,PIN_AF18,Yes
+,oSD_CLK,Location,PIN_T26,Yes
+,SD_CMD,Location,PIN_W28,Yes
+,SD_DAT,Location,PIN_W29,Yes
+,SD_DAT3,Location,PIN_Y30,Yes

@@ -4,8 +4,8 @@ module mips_system(
 	input  PS2_KBDAT,
 	input  iUART_RXD,
 	output oUART_TXD,
-	output [17:0] oLEDR,
-	output [8:0] oLEDG,
+	inout [17:0] oLEDR,
+	inout [8:0] oLEDG,
 	inout  [17:0] iSW,
 	input  [3:0] iKEY,
 	inout  [31:0]DRAM_DQ,
@@ -42,7 +42,11 @@ module mips_system(
 	output [3:0]oSRAM_BE_N,
 	output  oSRAM_CE1_N,
 	output  oSRAM_OE_N,
-	output  oSRAM_WE_N
+	output  oSRAM_WE_N,
+	output  oSD_CLK,
+	output  SD_CMD,
+	input   SD_DAT,
+	output  SD_DAT3
 );
 
 wire clk_100;
@@ -55,6 +59,8 @@ pll pll_entity(
 	.c1(clk_100),
 	.c2(clk_50)
 );
+
+wire [3:0] spi_ss_o;
 
 cpu_top#(
 	.EXT_CLOCK_FREQ(50000000)
@@ -102,6 +108,16 @@ cpu_top#(
 	.oSRAM_BE_N(oSRAM_BE_N),
 	.oSRAM_CE1_N(oSRAM_CE1_N),
 	.oSRAM_OE_N(oSRAM_OE_N),
-	.oSRAM_WE_N(oSRAM_WE_N)
+	.oSRAM_WE_N(oSRAM_WE_N),
+	/* SPI */
+	.spi_ss_o(spi_ss_o),
+	.spi_sck_o(oSD_CLK),
+	.spi_mosi_o(SD_CMD),
+	.spi_miso_i(SD_DAT)
 );
+
+
+    //SPI
+	assign SD_DAT3 = spi_ss_o[0];
+	
 endmodule

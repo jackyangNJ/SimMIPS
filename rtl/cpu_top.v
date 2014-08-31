@@ -12,6 +12,7 @@ module cpu_top
 	inout[31:0] gpio_pin,
 	input kb_clk_i,
 	input kb_dat_i,
+	/* SDRAM */
 	inout [31:0]DRAM_DQ,
 	output [12:0]oDRAM0_A,
 	output [12:0]oDRAM1_A,
@@ -33,6 +34,7 @@ module cpu_top
 	output oDRAM1_CLK,
 	output oDRAM0_CKE,
 	output oDRAM1_CKE,
+	/* SRAM */
 	inout [31:0]SRAM_DQ,
 	inout [3:0]SRAM_DPA,
 	output  oSRAM_ADSP_N,
@@ -46,7 +48,12 @@ module cpu_top
 	output [3:0]oSRAM_BE_N,
 	output  oSRAM_CE1_N,
 	output  oSRAM_OE_N,
-	output  oSRAM_WE_N
+	output  oSRAM_WE_N,
+	/* SPI */
+	output [3:0] spi_ss_o,
+	output spi_sck_o,
+	output spi_mosi_o,
+	input  spi_miso_i
 );
 
 
@@ -319,9 +326,9 @@ wire[31:0] pic_master_dat_o;
 wire pic_master_ack_o;
 
 /* pic slave */
-wire pic_slave_int_o;
-wire[31:0] pic_slave_dat_o;
-wire pic_slave_ack_o;
+wire spi_int_o;
+wire[7:0] spi_dat_o;
+wire spi_ack_o;
 
 /* slave 0 */
 wire pbus_slave_0_cyc_o,pbus_slave_0_stb_o,pbus_slave_0_we_o;
@@ -418,8 +425,8 @@ BusSwitchPer Bus_Switch_Per(
 	.slave_5_dat_o(pbus_slave_5_dat_o),
 	.slave_5_sel_o(pbus_slave_5_sel_o),
 	
-	.slave_6_dat_i(pic_slave_dat_o),
-	.slave_6_ack_i(pic_slave_ack_o),
+	.slave_6_dat_i({24'b0,spi_dat_o}),
+	.slave_6_ack_i(spi_ack_o),
 	.slave_6_stb_o(pbus_slave_6_stb_o),
 	.slave_6_cyc_o(pbus_slave_6_cyc_o),
 	.slave_6_we_o (pbus_slave_6_we_o),
@@ -524,22 +531,24 @@ pic_top pic_master(
 	.ack_o(pic_master_ack_o),
 	.dat_o(pic_master_dat_o),
 	.int_o(pic_master_int_o),
-	.irq_i({3'b0,uart_int_o,1'b0,pic_slave_int_o,kb_int_o,pit_int_o})
+	.irq_i({2'b0,spi_int_o,uart_int_o,2'b0,kb_int_o,pit_int_o})
 );
 
-pic_top pic_slave(
+simple_spi_top spi(
 	.clk_i(clk_per),
 	.rst_i(rst),
 	.stb_i(pbus_slave_6_stb_o),
 	.cyc_i(pbus_slave_6_cyc_o),
-	.sel_i(pbus_slave_6_sel_o),
 	.we_i (pbus_slave_6_we_o),
-	.adr_i(pbus_slave_6_adr_o),
-	.dat_i(pbus_slave_6_dat_o),
-	.ack_o(pic_slave_ack_o),
-	.dat_o(pic_slave_dat_o),
-	.int_o(pic_slave_int_o),
-	.irq_i(8'b0)
+	.adr_i(pbus_slave_6_adr_o[4:2]),
+	.dat_i(pbus_slave_6_dat_o[7:0]),
+	.ack_o(spi_ack_o),
+	.dat_o(spi_dat_o),
+	.inta_o(spi_int_o),
+	.ss_o(spi_ss_o),
+	.sck_o(spi_sck_o),
+	.mosi_o(spi_mosi_o),
+	.miso_i(spi_miso_i)
 );
 endmodule
 
