@@ -53,7 +53,17 @@ module cpu_top
 	output [3:0] spi_ss_o,
 	output spi_sck_o,
 	output spi_mosi_o,
-	input  spi_miso_i
+	input  spi_miso_i,
+	/* VGA */
+	input vga_clk_i,
+	output blank_N_o,
+	output sync_N_o,
+	output [9:0] color_r_o,
+	output [9:0] color_g_o,
+	output [9:0] color_b_o,
+	output vga_clk_o,
+	output h_syn_o,
+	output v_syn_o
 );
 
 
@@ -330,6 +340,10 @@ wire spi_int_o;
 wire[7:0] spi_dat_o;
 wire spi_ack_o;
 
+/* vga slave */
+wire[31:0] vga_dat_o;
+wire vga_ack_o;
+
 /* slave 0 */
 wire pbus_slave_0_cyc_o,pbus_slave_0_stb_o,pbus_slave_0_we_o;
 wire[31:0] pbus_slave_0_adr_o,pbus_slave_0_dat_o;
@@ -361,6 +375,10 @@ wire[3:0] pbus_slave_5_sel_o;
 wire pbus_slave_6_cyc_o,pbus_slave_6_stb_o,pbus_slave_6_we_o;
 wire[31:0] pbus_slave_6_adr_o,pbus_slave_6_dat_o;
 wire[3:0] pbus_slave_6_sel_o;
+/* slave 7 */
+wire pbus_slave_7_cyc_o,pbus_slave_7_stb_o,pbus_slave_7_we_o;
+wire[31:0] pbus_slave_7_adr_o,pbus_slave_7_dat_o;
+wire[3:0] pbus_slave_7_sel_o;
 
 BusSwitchPer Bus_Switch_Per(
 	.master_stb_i(biu_bus_per_stb_o),
@@ -432,7 +450,16 @@ BusSwitchPer Bus_Switch_Per(
 	.slave_6_we_o (pbus_slave_6_we_o),
 	.slave_6_adr_o(pbus_slave_6_adr_o),
 	.slave_6_dat_o(pbus_slave_6_dat_o),
-	.slave_6_sel_o(pbus_slave_6_sel_o)
+	.slave_6_sel_o(pbus_slave_6_sel_o),
+	
+	.slave_7_dat_i(vga_dat_o),
+	.slave_7_ack_i(vga_ack_o),
+	.slave_7_stb_o(pbus_slave_7_stb_o),
+	.slave_7_cyc_o(pbus_slave_7_cyc_o),
+	.slave_7_we_o (pbus_slave_7_we_o),
+	.slave_7_adr_o(pbus_slave_7_adr_o),
+	.slave_7_dat_o(pbus_slave_7_dat_o),
+	.slave_7_sel_o(pbus_slave_7_sel_o)
 );
 
 gpio_top gpio(
@@ -549,6 +576,27 @@ simple_spi_top spi(
 	.sck_o(spi_sck_o),
 	.mosi_o(spi_mosi_o),
 	.miso_i(spi_miso_i)
+);
+vga_top vga(
+	.bus_clk_i(clk_per),
+	.reset_i(rst),
+	.stb_i (pbus_slave_6_stb_o),
+	.cyc_i (pbus_slave_6_cyc_o),
+	.sel_i (pbus_slave_6_sel_o),
+	.we_i  (pbus_slave_6_we_o),
+	.adr_i (pbus_slave_6_adr_o),
+	.data_i(pbus_slave_6_dat_o),
+	.data_o(vga_data_o),
+	.ack_o(vga_ack_o),
+	.vga_clk_i(vga_clk_i),
+	.blank_N_o(blank_N_o),
+	.sync_N_o(sync_N_o),
+	.color_r_o(color_r_o),
+	.color_g_o(color_g_o),
+	.color_b_o(color_b_o),
+	.vga_clk_o(vga_clk_o),
+	.h_syn_o(h_syn_o),
+	.v_syn_o(v_syn_o)
 );
 endmodule
 

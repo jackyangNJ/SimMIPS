@@ -3,9 +3,13 @@ module WordMem(
 	input [9:0] read_addr_i,
 	output [7:0] read_data_o);
 	
-	WordMemM4K WM(
-		.address(read_addr_i),
-		.clock(clk_i),
+	single_port_rom
+	#(
+		.DATA_WIDTH(8),
+		.ADDR_WIDTH(10)
+	)WM(
+		.addr(read_addr_i),
+		.clk(clk_i),
 		.q(read_data_o));
 	
 endmodule

@@ -43,10 +43,21 @@ module mips_system(
 	output  oSRAM_CE1_N,
 	output  oSRAM_OE_N,
 	output  oSRAM_WE_N,
+	/* SD */
 	output  oSD_CLK,
 	output  SD_CMD,
 	input   SD_DAT,
-	output  SD_DAT3
+	output  SD_DAT3,
+	/* VGA */
+	output 	oVGA_BLANK_N,
+	output 	oVGA_SYNC_N,
+	output 	oVGA_CLOCK,
+	output 	oVGA_HS,
+	output 	oVGA_VS,
+	output 	[9:0] oVGA_B,
+	output 	[9:0] oVGA_G,
+	output 	[9:0] oVGA_R,
+	input 	iCLK_28
 );
 
 wire clk_100;
@@ -109,11 +120,21 @@ cpu_top#(
 	.oSRAM_CE1_N(oSRAM_CE1_N),
 	.oSRAM_OE_N(oSRAM_OE_N),
 	.oSRAM_WE_N(oSRAM_WE_N),
-	/* SPI */
+	/* SPI SD */
 	.spi_ss_o(spi_ss_o),
 	.spi_sck_o(oSD_CLK),
 	.spi_mosi_o(SD_CMD),
-	.spi_miso_i(SD_DAT)
+	.spi_miso_i(SD_DAT),
+	/* VGA */
+	.vga_clk_i(iCLK_28),
+	.blank_N_o(oVGA_BLANK_N),
+	.sync_N_o(oVGA_SYNC_N),
+	.color_r_o(oVGA_R),
+	.color_g_o(oVGA_G),
+	.color_b_o(oVGA_B),
+	.vga_clk_o(oVGA_CLOCK),
+	.h_syn_o(oVGA_HS),
+	.v_syn_o(oVGA_VS)
 );
 
 

@@ -1,9 +1,11 @@
-module VgaDeviceCtrl(
+module vga_top(
 	input bus_clk_i,
 	input reset_i,
-	input cs_i,
+	input stb_i,
+	input cyc_i,
+	input[3:0] sel_i,
 	input we_i,
-	input [31:0] addr_i,
+	input [31:0] adr_i,
 	input [31:0] data_i,
 	output [31:0] data_o,
 	output ack_o,
@@ -16,19 +18,9 @@ module VgaDeviceCtrl(
 	output vga_clk_o,
 	output h_syn_o,
 	output v_syn_o
-	//以下为测试时输出的中间变量
-	//,output evalid_oo,
-	//output [9:0] h_count_oo,
-	//output [9:0] v_count_oo,
-	//output [12:0] cur_char_addr_oo,
-	//output [12:0] vga_raddr_oo,
-	//output [7:0] vga_rdata_oo,
-	//output c_flash_oo,
-	//output [2:0] next_y_addr_oo,
-	//output [9:0] word_raddr_oo,
-	//output [7:0] word_rdata_oo
 	);
 
+	wire cs_i = stb_i & cyc_i;
 	//各种连线
 	wire bus_gm_en;				//总线读写控制与显存控制之间
 	wire bus_gm_wren;
@@ -73,13 +65,19 @@ module VgaDeviceCtrl(
 	wire [7:0] pixel_cache;	//像素缓存输出
 	wire pixel_color;
 	
+	wire [31:0] addr;
+	
+	assign addr = (sel_i == 4'b0001)? {adr_i[31:2],2'b00} :
+				  (sel_i == 4'b0010)? {adr_i[31:2],2'b01} :
+				  (sel_i == 4'b0100)? {adr_i[31:2],2'b10} :
+				  (sel_i == 4'b1000)? {adr_i[31:2],2'b11} : 0;
 	//总线读写控制
 	BusVgaWrCtrl BVWC(
 		.clk_i(bus_clk_i),
 		.cs_i(cs_i),
 		.wr_en_i(we_i),
 		.wdata_i(data_i),
-		.addr_i(addr_i),
+		.addr_i(addr),
 		.rdata_o(data_o),
 		.ack_o(ack_o),
 		.gm_en_o(bus_gm_en),
