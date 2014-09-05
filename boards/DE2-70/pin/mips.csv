@@ -1,4 +1,5 @@
 From,To,Assignment Name,Value,Enabled
+,iCLK_28,Location,PIN_E16,Yes
 ,iCLK_50,Location,PIN_AD15,Yes
 ,PS2_KBCLK,Location,PIN_F24,Yes
 ,PS2_KBDAT,Location,PIN_E24,Yes

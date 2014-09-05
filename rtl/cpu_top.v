@@ -563,7 +563,7 @@ pic_top pic_master(
 
 simple_spi_top spi(
 	.clk_i(clk_per),
-	.rst_i(rst),
+	.rst_i(~rst),
 	.stb_i(pbus_slave_6_stb_o),
 	.cyc_i(pbus_slave_6_cyc_o),
 	.we_i (pbus_slave_6_we_o),
@@ -580,23 +580,23 @@ simple_spi_top spi(
 vga_top vga(
 	.bus_clk_i(clk_per),
 	.reset_i(rst),
-	.stb_i (pbus_slave_6_stb_o),
-	.cyc_i (pbus_slave_6_cyc_o),
-	.sel_i (pbus_slave_6_sel_o),
-	.we_i  (pbus_slave_6_we_o),
-	.adr_i (pbus_slave_6_adr_o),
-	.data_i(pbus_slave_6_dat_o),
-	.data_o(vga_data_o),
-	.ack_o(vga_ack_o),
+	.stb_i (pbus_slave_7_stb_o),
+	.cyc_i (pbus_slave_7_cyc_o),
+	.sel_i (pbus_slave_7_sel_o),
+	.we_i  (pbus_slave_7_we_o),
+	.adr_i (pbus_slave_7_adr_o),
+	.dat_i (pbus_slave_7_dat_o),
+	.dat_o (vga_dat_o),
+	.ack_o (vga_ack_o),
 	.vga_clk_i(vga_clk_i),
 	.blank_N_o(blank_N_o),
-	.sync_N_o(sync_N_o),
+	.sync_N_o (sync_N_o),
 	.color_r_o(color_r_o),
 	.color_g_o(color_g_o),
 	.color_b_o(color_b_o),
 	.vga_clk_o(vga_clk_o),
-	.h_syn_o(h_syn_o),
-	.v_syn_o(v_syn_o)
+	.h_syn_o  (h_syn_o),
+	.v_syn_o  (v_syn_o)
 );
 endmodule
 

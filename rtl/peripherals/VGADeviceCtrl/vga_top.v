@@ -6,8 +6,8 @@ module vga_top(
 	input[3:0] sel_i,
 	input we_i,
 	input [31:0] adr_i,
-	input [31:0] data_i,
-	output [31:0] data_o,
+	input [31:0] dat_i,
+	output [31:0] dat_o,
 	output ack_o,
 	input vga_clk_i,
 	output blank_N_o,
@@ -65,20 +65,26 @@ module vga_top(
 	wire [7:0] pixel_cache;	//像素缓存输出
 	wire pixel_color;
 	
+	/* migrate from old bus standard to wishbone,we need to change the data byte order*/
 	wire [31:0] addr;
-	
 	assign addr = (sel_i == 4'b0001)? {adr_i[31:2],2'b00} :
 				  (sel_i == 4'b0010)? {adr_i[31:2],2'b01} :
 				  (sel_i == 4'b0100)? {adr_i[31:2],2'b10} :
 				  (sel_i == 4'b1000)? {adr_i[31:2],2'b11} : 0;
+	wire [31:0] vga_data_r,vga_data_w;
+	assign vga_data_w = (sel_i == 4'b0001)? {24'b0,dat_i[7:0]}   :
+						(sel_i == 4'b0010)? {24'b0,dat_i[15:8]}  :
+						(sel_i == 4'b0100)? {24'b0,dat_i[23:16]} :
+						(sel_i == 4'b1000)? {24'b0,dat_i[31:24]} : dat_i;
+
 	//总线读写控制
 	BusVgaWrCtrl BVWC(
 		.clk_i(bus_clk_i),
 		.cs_i(cs_i),
 		.wr_en_i(we_i),
-		.wdata_i(data_i),
+		.wdata_i(vga_data_w),
 		.addr_i(addr),
-		.rdata_o(data_o),
+		.rdata_o(vga_data_r),
 		.ack_o(ack_o),
 		.gm_en_o(bus_gm_en),
 		.gm_wr_en_o(bus_gm_wren),
@@ -203,7 +209,10 @@ module vga_top(
 		
 	//输出VGA时钟
 	assign vga_clk_o = vga_clk_i;
-	
+	assign dat_o = (sel_i == 4'b0001)? {24'b0,vga_data_r[7:0]}      :
+				   (sel_i == 4'b0010)? {16'b0,vga_data_r[7:0],8'b0} :
+				   (sel_i == 4'b0100)? {8'b0,vga_data_r[7:0],16'b0} :
+				   (sel_i == 4'b1000)? {vga_data_r[7:0],24'b0}      : vga_data_r;
 	//以下为测试时输出的中间变量
 	/*assign evalid_oo = envalid;
 	assign h_count_oo = h_count;
