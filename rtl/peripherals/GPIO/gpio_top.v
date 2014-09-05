@@ -31,7 +31,6 @@ module gpio_top(
 			begin
 				reg_ctrl <=  0; //default direction is input
 				reg_data <=  0;
-				reg_data <=  0;
 				ack <= 0;
 			end
 		else
