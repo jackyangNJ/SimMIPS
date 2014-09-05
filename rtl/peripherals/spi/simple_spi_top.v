@@ -67,7 +67,7 @@
 //
 
 // synopsys translate_off
-`include "timescale.v"
+`timescale 1 ns/ 1 ps
 // synopsys translate_on
 
 module simple_spi_top(
@@ -123,6 +123,7 @@ module simple_spi_top(
       begin
           spcr <= #1 8'h10;  // set master bit
           sper <= #1 8'h00;
+		  spssr <= #1 4'hf;
       end
     else if (wb_wr)
       begin

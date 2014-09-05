@@ -51,9 +51,9 @@
 //
 
 // synopsys translate_off
-`include "timescale.v"
+// `include "timescale.v"
 // synopsys translate_on
-
+`timescale 1 ns/ 1 ps
 
 // 4 entry deep fast fifo
 module fifo4(clk, rst, clr,  din, we, dout, re, full, empty);
