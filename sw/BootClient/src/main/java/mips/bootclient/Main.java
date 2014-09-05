@@ -38,7 +38,9 @@ public class Main {
         //send command 
         if (!config.filePath.equals("")) {
             //send bin
-            clientCore.sendBIN(config.filePath, Long.decode(config.targetAddr));
+            boolean rtn = clientCore.sendBIN(config.filePath, Long.decode(config.targetAddr));
+            if(!rtn)
+                return;
         }
 
         //send boot command

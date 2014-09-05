@@ -45,8 +45,7 @@ public class ClientCore implements SerialPortEventListener {
             //Add SerialPortEventListener
             serialPort.addEventListener(this);
 
-        }
-        catch (SerialPortException ex) {
+        } catch (SerialPortException ex) {
             logger.error(ex);
             return false;
         }
@@ -62,6 +61,7 @@ public class ClientCore implements SerialPortEventListener {
      * @return
      */
     public boolean sendBIN(String filePath, long addr) {
+        logger.info("file: "+filePath);
         File file = new File(filePath);
         InputStream in;
         byte[] fileContents;
@@ -71,12 +71,10 @@ public class ClientCore implements SerialPortEventListener {
             fileContents = new byte[in.available()];
             len = in.read(fileContents, 0, in.available());
             logger.info("file length = " + len);
-        }
-        catch (FileNotFoundException ex) {
+        } catch (FileNotFoundException ex) {
             logger.error(ex);
             return false;
-        }
-        catch (IOException ex) {
+        } catch (IOException ex) {
             logger.error(ex);
             return false;
         }
@@ -95,8 +93,7 @@ public class ClientCore implements SerialPortEventListener {
                         java.util.logging.Logger.getLogger(ClientCore.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
-            }
-            catch (SerialPortException ex) {
+            } catch (SerialPortException ex) {
                 logger.error(ex);
             }
         }
@@ -116,11 +113,6 @@ public class ClientCore implements SerialPortEventListener {
 
             serialPort.writeInt((int) ((value >> 16) & 0xFF0000));
             serialPort.writeInt((int) ((value >> 24) & 0xFF));
-
-//            logger.info((int) (value & 0xFF));
-//            logger.info((int) ((value >> 8) & 0xFF));
-//            logger.info((int) ((value >> 16) & 0xFF));
-//            logger.info((int) ((value >> 24) & 0xFF));
         }
     }
 
@@ -135,8 +127,7 @@ public class ClientCore implements SerialPortEventListener {
             try {
                 serialPort.writeInt(MSG_BOOT_TYPE);
                 serialWriteLong(addr);
-            }
-            catch (SerialPortException ex) {
+            } catch (SerialPortException ex) {
                 logger.error(ex);
                 return false;
             }
@@ -158,8 +149,7 @@ public class ClientCore implements SerialPortEventListener {
         if (isSerialOpened()) {
             try {
                 serialPort.closePort();
-            }
-            catch (SerialPortException ex) {
+            } catch (SerialPortException ex) {
                 logger.error(ex);
                 return false;
             }
@@ -183,14 +173,13 @@ public class ClientCore implements SerialPortEventListener {
                         break;
                     }
                     if (buffer[0] == '\n') {
-                        logger.info(new String(lineBuf.array(),0,lineBuf.position()));
+                        logger.info(new String(lineBuf.array(), 0, lineBuf.position()));
                         lineBuf.clear();
                     } else {
                         lineBuf.put(buffer);
                     }
                 }
-            }
-            catch (SerialPortException ex) {
+            } catch (SerialPortException ex) {
                 logger.error(ex);
             }
         }
