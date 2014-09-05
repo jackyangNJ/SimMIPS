@@ -27,7 +27,7 @@ class Config {
     @CmdOption(names = {"-addr"}, args = {"addr"}, maxCount = 1, minCount = 1, description = "Point to target addr(needed).")
     public final String targetAddr = new String();
     
-    @CmdOption(names = {"-entry","-e"}, args = {"addr"}, maxCount = 1, minCount = 1, description = "Point to target addr(needed).")
+    @CmdOption(names = {"-entry","-e"}, args = {"addr"}, maxCount = 1, minCount = 1, description = "Point to entry addr(needed).")
     public final String entryAddr = new String();
 
     @CmdOption(names = {"-file", "-f"}, args = {"filePath"}, maxCount = 1, description = "Specify the file path to transfer file via seiral(Optional).")

@@ -1,7 +1,6 @@
 package mips.bootclient;
 
 import de.tototec.cmdoption.CmdlineParser;
-import jssc.SerialPort;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -74,5 +73,6 @@ public class Main {
 
         Main main = new Main(args);
         main.run();
+//        System.exit(0);
     }
 }
