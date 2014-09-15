@@ -111,7 +111,7 @@ public class ClientCore implements SerialPortEventListener {
             serialPort.writeInt((int) (value & 0xFF));
             serialPort.writeInt((int) ((value >> 8) & 0xFF));
 
-            serialPort.writeInt((int) ((value >> 16) & 0xFF0000));
+            serialPort.writeInt((int) ((value >> 16) & 0xFF));
             serialPort.writeInt((int) ((value >> 24) & 0xFF));
         }
     }
