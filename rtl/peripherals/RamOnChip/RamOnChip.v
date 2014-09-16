@@ -29,7 +29,7 @@ module RamOnChip(
 	SinglePortRam ram(
 		.clk_i(clk_i),
 		.we_i(we_i & cs & !ack),
-		.adr_i(adr_i[13:2]),
+		.adr_i(adr_i[14:2]),
 		.be_i(sel_i),
 		.dat_i(dat_i),
 		.dat_o(dat_o)

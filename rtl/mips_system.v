@@ -140,5 +140,6 @@ cpu_top#(
 
     //SPI
 	assign SD_DAT3 = spi_ss_o[0];
+    
 	
 endmodule
