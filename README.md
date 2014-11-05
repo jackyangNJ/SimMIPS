@@ -12,7 +12,7 @@ Features of CPU as follows:
   * Almost fully functional System Control Coprocessor(CP0)
 
 ![CPU Architecture][3]
-The picture above is the CPU architecture.
+**The picture above is the CPU architecture.**
 
 As for peripherals, we provide UART, SPI Master Controller, Timer, RTC(real time controller), GPIO(General Purpose IO), PIC(Programmable Interrupt Controller) and VGA Display Controller. The storage system is composed of SDRAM, SRAM, FPGA BlockRAM and SD card connected via SPI bus.
 
