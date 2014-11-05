@@ -11,6 +11,9 @@ Features of CPU as follows:
   * Hardware Multiply-Divide Unit(MDU)
   * Almost fully functional System Control Coprocessor(CP0)
 
+![CPU Architecture][3]
+The picture above is the CPU architecture.
+
 As for peripherals, we provide UART, SPI Master Controller, Timer, RTC(real time controller), GPIO(General Purpose IO), PIC(Programmable Interrupt Controller) and VGA Display Controller. The storage system is composed of SDRAM, SRAM, FPGA BlockRAM and SD card connected via SPI bus.
 
 Apart from hardware implementation on FPGA, there is still a long way to go before launching Hello World program. We develop boot software system to assist developers. You can run **BootClient** software on PC to transmit an elf-format executable program over serial line which is connected between PC and FPGA board. Then the **BootRom** in FPGA will store the program in memory and execute it. In another way, you could store the executable program in SD card before plugged in and choose *Boot from SD card* when power up the board.
