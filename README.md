@@ -27,3 +27,4 @@ For more details, welcome to [SimMIPS wiki][1]
 
 [1]:https://github.com/jackyang74/SimMIPS/wiki
 [2]:http://opencores.org/opencores,wishbone
+[3]:https://raw.githubusercontent.com/jackyang74/SimMIPS/master/doc/CPU.jpg
