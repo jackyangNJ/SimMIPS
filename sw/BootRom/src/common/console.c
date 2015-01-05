@@ -68,7 +68,7 @@ void console_print_help() {
     serial_printf("4. GO address. --> set MIPS PC to the value of address\n");
     serial_printf("5. HELP. --> help usage \n");
     serial_printf("6. TRANFER. --> set into transfer mode,so that you can transfer your executable program to memory from serial rather than SD card. In this mode,you need to use BootClient program on PC. \n");
-    serial_printf("7. SHOW sectorAddr(in hex:0x123), show the content of SD card at specified sector address,the size is 512 Byte")
+    serial_printf("7. SHOW sectorAddr(in hex:0x123), show the content of SD card at specified sector address,the size is 512 Byte");
     serial_printf("NOTE: All commands must be in capital \n");
 }
 
