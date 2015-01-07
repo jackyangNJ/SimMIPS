@@ -5,6 +5,7 @@ The CPU is a simplified version of MIPS32 4Kc processor and is implemented in Ve
 Features of CPU as follows:
   * 32bit RISC architecture
   * 5 stage pipeline
+  * compatable with MIPS32 Release 1 instruction set
   * dynamic branch predictor
   * MMU with ITLB and DTLB
   * Bus Interface Unit(BIU) with [Wishbone bus protocol][2]
