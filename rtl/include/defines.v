@@ -1,37 +1,49 @@
+//global defines
+`define RstEnable       1'b1
+`define RstDisable      1'b0
+`define WriteEnable     1'b1
+`define WriteDisable    1'b0
+`define ReadEnable      1'b1
+`define ReadDisable     1'b0
+`define ChipEnable      1'b1
+`define ChipDisable     1'b0
+
+
 /*
  * CP0 Registers address
  */
-`define CP0_INDEX_ADDR 5'd0
-`define CP0_RANDOM_ADDR 5'd1
-`define CP0_ENTRYLO0_ADDR 5'd2
-`define CP0_ENTRYLO1_ADDR 5'd3
-`define CP0_CONTEXT_ADDR 5'd4
-`define CP0_PAGEMASK_ADDR 5'd5
-`define CP0_WIRED_ADDR 5'd6
-`define CP0_BADVADDR_ADDR 5'd8
-`define CP0_COUNT_ADDR 5'd9
-`define CP0_ENTRYHI_ADDR 5'd10
-`define CP0_COMPARE_ADDR 5'd11
-`define CP0_STATUS_ADDR 5'd12
-`define CP0_CAUSE_ADDR 5'd13
-`define CP0_EPC_ADDR 5'd14
-`define CP0_PRID_ADDR 5'd15
-`define CP0_CONFIG_ADDR 5'd16
-`define CP0_LLADDR_ADDR 5'd17
-`define CP0_ERRCTL_ADDR 5'd26
-`define CP0_TAGLO_ADDR 5'd28
-`define CP0_ERROREPC_ADDR 5'd30
-/* CP0 exceptions */
-`define EXC_Int 5'd0
-`define EXC_Mod 5'd1
-`define EXC_TLBL 5'd2
-`define EXC_TLBS 5'd3
-`define EXC_AdEL 5'd4
-`define EXC_AdES 5'd5
-`define EXC_Sys 5'd8
-`define EXC_Ov 5'd12
+`define CP0_INDEX_ADDR      5'd0
+`define CP0_RANDOM_ADDR     5'd1
+`define CP0_ENTRYLO0_ADDR   5'd2
+`define CP0_ENTRYLO1_ADDR   5'd3
+`define CP0_CONTEXT_ADDR    5'd4
+`define CP0_PAGEMASK_ADDR   5'd5
+`define CP0_WIRED_ADDR      5'd6
+`define CP0_BADVADDR_ADDR   5'd8
+`define CP0_COUNT_ADDR      5'd9
+`define CP0_ENTRYHI_ADDR    5'd10
+`define CP0_COMPARE_ADDR    5'd11
+`define CP0_STATUS_ADDR     5'd12
+`define CP0_CAUSE_ADDR      5'd13
+`define CP0_EPC_ADDR        5'd14
+`define CP0_PRID_ADDR       5'd15
+`define CP0_CONFIG_ADDR     5'd16
+`define CP0_LLADDR_ADDR     5'd17
+`define CP0_ERRCTL_ADDR     5'd26
+`define CP0_TAGLO_ADDR      5'd28
+`define CP0_ERROREPC_ADDR   5'd30
 
-//MDU
+/* CP0 exceptions */
+`define EXC_Int     5'd0
+`define EXC_Mod     5'd1
+`define EXC_TLBL    5'd2
+`define EXC_TLBS    5'd3
+`define EXC_AdEL    5'd4
+`define EXC_AdES    5'd5
+`define EXC_Sys     5'd8
+`define EXC_Ov      5'd12
+
+/* MDU Op constants */
 `define MDU_OP_NOP      (4'd0)
 `define MDU_OP_DIV      (4'd1)
 `define MDU_OP_DIVU     (4'd2)
@@ -43,8 +55,10 @@
 `define MDU_OP_MTHI     (4'd8)
 `define MDU_OP_MTLO     (4'd9)
 
-/* instruction */
-//OP字段常量
+/* 
+ * instruction code
+ */
+
 `define OP_REGIMM    (6'b000001)
 `define OP_J         (6'b000010)
 `define OP_JAL       (6'b000011)
@@ -110,7 +124,6 @@
 `define TAIL_TLBWI   (6'b000010)
 `define TAIL_TLBWR   (6'b000110)
 `define TAIL_TLBP    (6'b001000)
-//其他字段常量，BGEZ、BLTZ的rt字段用于标识，MFC0、MTC0的RS字段用于标识
 
 `define RT_BGEZ      (5'b00001)
 `define RT_BGEZAL    (5'b10001)
