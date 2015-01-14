@@ -1,4 +1,4 @@
-`include "../include/Defines.v"
+`include "CPUConstants.v"
 module ID(
 	input [31:0] id_bpu_pc,
 	input [31:0] id_instr,

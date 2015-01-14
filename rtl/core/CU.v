@@ -1,4 +1,4 @@
-`include "CPUConstants.v"
+`include "../include/Defines.v"
 module CU(
 	input pause_i,
 	input [31:0]id_instr,

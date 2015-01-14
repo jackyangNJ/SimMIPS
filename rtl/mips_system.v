@@ -8,6 +8,7 @@ module mips_system(
 	inout [8:0] oLEDG,
 	inout  [17:0] iSW,
 	input  [3:0] iKEY,
+    /* SDRAM */
 	inout  [31:0]DRAM_DQ,
 	output [12:0]oDRAM0_A,
 	output [12:0]oDRAM1_A,
@@ -29,6 +30,7 @@ module mips_system(
 	output oDRAM1_CLK,
 	output oDRAM0_CKE,
 	output oDRAM1_CKE,
+    /* SSRAM */
 	inout [31:0]SRAM_DQ,
 	inout [3:0]SRAM_DPA,
 	output  oSRAM_ADSP_N,

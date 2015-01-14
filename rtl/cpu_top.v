@@ -7,9 +7,12 @@ module cpu_top
 	input clk_sdram_i,
 	input clk_sdram_controller_i,
 	input external_rst_i,
+    /* uart */
 	input uart_rx_i,
 	output uart_tx_o,
+    /* gpio */
 	inout[31:0] gpio_pin,
+    /* keyboard */
 	input kb_clk_i,
 	input kb_dat_i,
 	/* SDRAM */
@@ -67,7 +70,7 @@ module cpu_top
 );
 
 
-/*globa signals*/
+/* global signals */
 wire clk_core = external_clk_i;
 // wire clk_bus  = external_clk_i;
 wire clk_per  = external_clk_i;

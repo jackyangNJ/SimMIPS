@@ -1,4 +1,4 @@
-`include "CPUConstants.v"
+`include "../include/Defines.v"
 module CP0(
 	input clk,
 	input reset,
