@@ -26,7 +26,11 @@ module RamOnChip(
 				ack <= 1'b0;
 	end
 	
-	SinglePortRam ram(
+	SinglePortRam  #(
+        .RAM_DEPTH(8191),
+        .INIT_FILE("ram_init.mif")
+    )
+    ram(
 		.clk_i(clk_i),
 		.we_i(we_i & cs & !ack),
 		.adr_i(adr_i[14:2]),
