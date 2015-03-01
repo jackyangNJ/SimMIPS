@@ -2,28 +2,41 @@
 #include "drivers/gpio.h"
 
 #define GPIO_REG_BASE 0xB8000400
+#define GPIO_REG_CTRL 0xB8000404
+#define GPIO_REG_DATA 0xB8000400
 
-void gpio_configure(uint32_t config)
+void gpio_set_out(int num)
 {
-	out_long(GPIO_REG_BASE+4,config);
-	out_long(GPIO_REG_BASE,0xFFFFFFFF);
+    int data = in_long(GPIO_REG_CTRL);
+    data |= (1 << num);
+    out_long(GPIO_REG_CTRL, data);
 }
+void gpio_set_in(int num)
+{
+    int data = in_long(GPIO_REG_CTRL);
+    data &= ~(1 << num);
+    out_long(GPIO_REG_CTRL, data);
 
+}
 
 void gpio_set(int num)
 {
-	int value = in_long(GPIO_REG_BASE);
-	out_long(GPIO_REG_BASE,value | 1<<num);
+    int data = in_long(GPIO_REG_DATA);
+    data |= (1 << num);
+    out_long(GPIO_REG_DATA, data);
+
 }
  
 void gpio_clear(int num)
 {
-	int value = in_long(GPIO_REG_BASE);
-	out_long(GPIO_REG_BASE,value & ~(1<<num));	
+    int data = in_long(GPIO_REG_DATA);
+    data &= ~(1 << num);
+    out_long(GPIO_REG_DATA, data);
 }
  
 int gpio_get(int num)
 {
-	int value = in_long(GPIO_REG_BASE);
-	return (value & (1<<num)) != 0;
+    int data = in_long(GPIO_REG_DATA);
+    data &= (1 << num);
+    return (data != 0);
 }
