@@ -1,3 +1,7 @@
+/*
+ * This module is written for SSRAM on Altera DE2-70 board.
+ */
+
 module ssram_top
 (
 	input clk_i,
