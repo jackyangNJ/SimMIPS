@@ -27,11 +27,11 @@ export	CROSS_COMPILE
 all: $(OBJECTS)
 	$(LD) $(LDFLAGS) -T ram-qemu.ld $(OBJECTS) -o bootloader
 	$(OBJCOPY) -O binary bootloader bootloader.bin
-	$(OBJDUMP) -S bootloader  > code.txt
+	$(OBJDUMP) -D bootloader  > code.txt
 board:$(OBJECTS)
 	$(LD) $(LDFLAGS) -T ram-board.ld $(OBJECTS) -o bootloader
 	$(OBJCOPY) -O binary bootloader bootloader.bin
-	$(OBJDUMP) -S bootloader  > code.txt
+	$(OBJDUMP) -D bootloader  > code.txt
 run:
 	qemu-system-mipsel -kernel bootloader -serial stdio
 debug:
