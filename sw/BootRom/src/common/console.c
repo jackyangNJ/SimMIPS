@@ -8,7 +8,6 @@
 #include "mips/io.h"
 #include "serial-msg.h"
 
-
 int console_get_command(char * parameter) {
     char str_buf[100];
     int i = 0;
@@ -20,6 +19,7 @@ int console_get_command(char * parameter) {
         if (ch != '\n' && ch != '\r')
             str_buf[i++] = ch;
         else
+            if (ch == '\n')
             break;
     }
 
@@ -32,9 +32,9 @@ int console_get_command(char * parameter) {
         case 'D':
             rtn = CMD_DIR;
             break;
-        case 'R':
+        case 'E':
             rtn = CMD_RUN;
-            strcpy(parameter, &str_buf[4]);
+            strcpy(parameter, &str_buf[7]);
             break;
         case 'G':
             rtn = CMD_GO;
@@ -52,10 +52,17 @@ int console_get_command(char * parameter) {
         case 'S':
             rtn = CMD_SHOW;
             break;
+        case 'W':
+            rtn = CMD_WRITE;
+            strcpy(parameter, &str_buf[6]);
+            break;
+        case 'R':
+            rtn = CMD_READ;
+            strcpy(parameter, &str_buf[5]);
+            break;
         default:
             rtn = CMD_UNKNOWN;
             break;
-            
     }
     return rtn;
 }
@@ -64,11 +71,13 @@ void console_print_help() {
     serial_printf("help:\n");
     serial_printf("1. LOAD file-name. -->load file from SD card to memory \n");
     serial_printf("2. DIR.  --> list all file names in SD root directory \n");
-    serial_printf("3. RUN file-name. --> run the executable file from SD card \n");
+    serial_printf("3. EXCUTE file-name. --> run the executable file from SD card \n");
     serial_printf("4. GO address. --> set MIPS PC to the value of address\n");
     serial_printf("5. HELP. --> help usage \n");
     serial_printf("6. TRANFER. --> set into transfer mode,so that you can transfer your executable program to memory from serial rather than SD card. In this mode,you need to use BootClient program on PC. \n");
-    serial_printf("7. SHOW sectorAddr(in hex:0x123), show the content of SD card at specified sector address,the size is 512 Byte");
+    serial_printf("7. SHOW sectorAddr(in hex:0x123), show the content of SD card at specified sector address,the size is 512 Byte \n");
+    serial_printf("8. WRITE address value, address should be in the hex format. \n");
+    serial_printf("9. READ address. \n");
     serial_printf("NOTE: All commands must be in capital \n");
 }
 
@@ -89,8 +98,8 @@ int console_transfer() {
     int i;
     uint32_t addr;
     uint8_t type;
-    
-    while(true){
+
+    while (true) {
         type = serial_read_byte();
         if (type == SERIAL_MSG_BIN_TYPE) {
             serial_printf("type:receive bin file\n");
@@ -98,8 +107,8 @@ int console_transfer() {
             serial_printf("file length = %x\n", length);
             addr = serial_read_int();
             serial_printf("target addr = %x\n", addr);
-            
-            for (i = 0; i < length; i++) 
+
+            for (i = 0; i < length; i++)
                 out_byte(addr + i, serial_read_byte());
         } else
             if (type == SERIAL_MSG_BOOT_TYPE) {
@@ -115,10 +124,10 @@ int console_transfer() {
 
 void console_loop() {
     int cmd;
-    uint32_t addr;
+    uint32_t addr, value;
     char parameter[100];
     uint8_t buffer[512];
-    int j,k;
+    int j, k;
     while (true) {
         serial_printf("mips> ");
         cmd = console_get_command(parameter);
@@ -130,7 +139,7 @@ void console_loop() {
                     serial_printf("LOAD succeed\n");
                 break;
             case CMD_DIR:
-                if (list_root_files((uint8_t*)parameter) < 0)
+                if (list_root_files((uint8_t*) parameter) < 0)
                     serial_printf("Can't read root directory \n");
                 else
                     serial_printf(parameter);
@@ -141,7 +150,7 @@ void console_loop() {
                 break;
             case CMD_GO:
                 addr = str2hex(parameter);
-                serial_printf("go addr=%x\n",addr);
+                serial_printf("go addr=%x\n", addr);
                 cpu_jump(addr);
                 break;
             case CMD_HELP:
@@ -158,13 +167,29 @@ void console_loop() {
             case CMD_SHOW:
                 addr = str2hex(parameter);
                 sd_read_sector(addr, buffer);
-                serial_printf("At sector address %s :\n",parameter);
-                for(j=0;j<32;j++){
-                    for(k=0;k<16;k++)
-                        serial_printf("%x ",buffer[j*16+k]);
-                    for(k=0;k<16000;k++);
+                serial_printf("At sector address %s :\n", parameter);
+                for (j = 0; j < 32; j++) {
+                    for (k = 0; k < 16; k++)
+                        serial_printf("%x ", buffer[j * 16 + k]);
+                    for (k = 0; k < 16000; k++);
                     serial_printf("\n");
-                } 
+                }
+                break;
+            case CMD_WRITE:
+            {
+                char* pos = strchr(parameter, ' ');
+                char str_value[15], str_addr[15];
+                strncpy(str_addr, parameter, pos - parameter);
+                addr = str2hex(str_addr);
+                strcpy(str_value, ++pos);
+                value = str2hex(str_value);
+                out_long(addr, value);
+                break;
+            }
+            case CMD_READ:
+                addr = str2hex(parameter);
+                value = in_long(addr);
+                break;
         }
     }
 }
