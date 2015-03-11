@@ -343,7 +343,7 @@ Section_bpu_wen	b2v_inst33(
 
 
 Section_rs	b2v_inst34(
-	.id_rs_out(id_rs_out),
+	.id_rs_out(id_a),
 	.rs_l(rs_l));
 
 
@@ -365,7 +365,7 @@ PC_register b2v_inst0(
 	.next_pc(next_pc),
 	.if_pc_out(if_pc_out));
 
-///////////////////////////////IF stage////////////////////////////////////
+////////////////////////////Begin IF stage////////////////////////////////////
     Multi_2 #(
       .DATA_WIDTH (32)
     )if_new_pc_selector(
@@ -386,7 +386,7 @@ BPU	bpu_inst(
 	.if_pc_4_out(if_pc_4_out),
 	.if_bpu_index(if_bpu_index),
 	.if_bpu_pc(if_bpu_pc));
-///////////////////////////////////////////////////////////////////////////
+////////////////////////////End IF stage//////////////////////////////////////
 IFID_register	ifid_regs(
 	.clk(clk),
 	.reset(reset),
@@ -463,7 +463,14 @@ ID	instr_decode(
 		.sel(id_bra_addr_sel),
 		.data(id_br_addr)
 	);
-	
+    Multi_2 #(
+      .DATA_WIDTH (5)
+    )id_shift_amount_sel(
+	.sel(id_shift_sel),
+	.a(id_shamt),
+	.b(rs_l),
+	.data(id_shift_amount));
+
 GPRs	b2v_inst11(
 	.clk(clk),
 	.wr_regwr(wr_regwr),
@@ -725,13 +732,6 @@ Adder	id_bra_addr_adder(
 	.result(id_bra_addr));
 
 
-    Multi_2 #(
-      .DATA_WIDTH (5)
-    )id_shift_amount_sel(
-	.sel(id_shift_sel),
-	.a(id_shamt),
-	.b(rs_l),
-	.data(id_shift_amount));
 
 
 endmodule
