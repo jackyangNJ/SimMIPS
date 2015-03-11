@@ -1,3 +1,4 @@
+`include "../../include/Defines.v"
 module RamOnChip(
 	input        clk_i,
 	input        rst_i,
@@ -28,7 +29,7 @@ module RamOnChip(
 	
 	SinglePortRam  #(
         .RAM_DEPTH(8191),
-        .INIT_FILE("ram_init.mif")
+        .INIT_FILE(`RamOnChip_INIT_FILE)
     )
     ram(
 		.clk_i(clk_i),
