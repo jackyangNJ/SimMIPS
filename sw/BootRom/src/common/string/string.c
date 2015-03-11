@@ -1,6 +1,4 @@
-
 #include "string.h"
-
 int strlen(char* p) {
     char* q = p;
     while (*q != '\0') q++;
@@ -56,6 +54,15 @@ int strncmp(char* s1, char* s2, int max_len) {
     if (max_len == 0)
         return 0;
     return *s1 - *s2;
+}
+
+char* strchr(char* s1, int c) {
+    char *p = s1;
+    while (*p != '\0') {
+        if ((int) *p == c) return p;
+        p++;
+    }
+    return 0;
 }
 
 void* memcpy(void *dest, void *src, int len) {
@@ -124,18 +131,18 @@ int str2hex(char* str) {
     int num = 0;
     tolower(str);
     if (str[0] == '0' && str[1] == 'x') {
-        str +=2;
+        str += 2;
         while (*str) {
             if (*str >= '0' && *str <= '9')
                 num = (num << 4) + *str - '0';
             else
                 if (*str >= 'a' && *str <= 'f')
-					num = (num << 4) + *str - 'a' + 10;
-				else
-                    return 0;
-            str ++;
+                num = (num << 4) + *str - 'a' + 10;
+            else
+                return 0;
+            str++;
         }
-		return num;
+        return num;
     } else
         return 0;
 }

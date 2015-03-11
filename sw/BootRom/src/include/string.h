@@ -9,6 +9,7 @@ int strcmp(char* st, char* s2);
 char* strncpy(char* dest, char* src, int max_len);
 char* strncat(char* dest, char* src, int max_len);
 int strncmp(char* st, char* s2, int max_len);
+char* strchr(char* s1, int c);
 
 void* memcpy(void *dest, void *src, int len);
 void* memcpyl(void *dest, void *src, int len);
