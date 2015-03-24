@@ -7,4 +7,5 @@ boot:
 clean:
 	cd mips-boot && make clean
 	cd mips-app && make clean
+	-rm rom.txt
     

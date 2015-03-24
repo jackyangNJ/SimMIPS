@@ -189,6 +189,7 @@ void console_loop() {
             case CMD_READ:
                 addr = str2hex(parameter);
                 value = in_long(addr);
+                serial_printf("addr 0x%x = %x\n", addr, value);
                 break;
         }
     }

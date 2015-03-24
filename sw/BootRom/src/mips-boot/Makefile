@@ -1,5 +1,4 @@
 ifndef CROSS_COMPILE
-# CROSS_COMPILE = mips-sde-elf-
 CROSS_COMPILE = mips-linux-gnu-
 endif
 AS = $(CROSS_COMPILE)as
