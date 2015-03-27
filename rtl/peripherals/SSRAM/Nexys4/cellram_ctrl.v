@@ -6,8 +6,6 @@ module cellram_ctrl
    wb_stb_i, wb_cyc_i,
    wb_we_i, wb_sel_i,
    wb_dat_o, wb_ack_o,
-   wb_err_o, wb_rty_o,
-
 
    cellram_dq_io,
    cellram_adr_o,
@@ -57,7 +55,6 @@ module cellram_ctrl
 
    output reg [31:0] 			   wb_dat_o;
    output reg 				   wb_ack_o;
-   output 				   wb_err_o, wb_rty_o;
 
    reg [3:0] 				   wb_state;
 
