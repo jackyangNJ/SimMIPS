@@ -71,6 +71,5 @@ module Ram_Nexys4_top(
             );
     endgenerate
     //ack signal
-    assign ack_o = psram_rd_ack & psram_wr_ack;
-    
+    assign ack_o = psram_rd_ack | psram_wr_ack;
 endmodule

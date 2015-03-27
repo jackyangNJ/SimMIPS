@@ -35,9 +35,6 @@ module cellram_ctrl_top(
    .wb_sel_i(sel_i),
    .wb_dat_o(dat_o), 
    .wb_ack_o(ack_o),
-   .wb_err_o(), 
-   .wb_rty_o(),
-
 
    .cellram_dq_io(Mem_DQ),
    .cellram_adr_o(Mem_A),
