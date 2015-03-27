@@ -1,33 +1,20 @@
-module gpio_top(
-    clk_i,
-    rst_i,
-    wb_cyc_i,
-    wb_stb_i,
-    wb_we_i,
-    wb_adr_i,
-    wb_sel_i,
-    wb_dat_i,
-    wb_dat_o,
-    wb_ack_o,
-    gpio_pin
+module gpio_top #(
+    parameter PORT_NUM = 32 //The maximum port num should be less than 128
+)
+(
+    input clk_i,
+    input rst_i,
+    input        wb_cyc_i,
+    input        wb_stb_i,
+    input [31:0] wb_adr_i,
+    input        wb_we_i, 
+    input [3:0]  wb_sel_i,
+    input [31:0] wb_dat_i,
+    output[31:0] wb_dat_o,
+    output       wb_ack_o,
+    inout [PORT_NUM-1:0]  gpio_pin
 );
 
-    /* parameter */
-    parameter PORT_NUM = 32; //The maximum port num should be less than 128
-    
-    /* module interface*/
-    input clk_i;
-    input rst_i;
-    input        wb_cyc_i;
-    input        wb_stb_i;
-    input [31:0] wb_adr_i;
-    input        wb_we_i; 
-    input [3:0]  wb_sel_i;
-    input [31:0] wb_dat_i;
-    output[31:0] wb_dat_o;
-    output       wb_ack_o;
-    inout [PORT_NUM-1:0]  gpio_pin;
-  
     /* 
      * internal register
      * register map:
