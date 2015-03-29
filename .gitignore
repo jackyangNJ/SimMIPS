@@ -29,3 +29,4 @@
 *.hex
 *.d
 /sw/BootClient/target/
+/sw/BootRom/src/nbproject/
