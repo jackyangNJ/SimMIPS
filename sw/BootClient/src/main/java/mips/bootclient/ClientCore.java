@@ -85,12 +85,13 @@ public class ClientCore implements SerialPortEventListener {
                 serialWriteLong(len);
                 serialWriteLong(addr);
 //                serialPort.writeBytes(fileContents);
+                //send one byte every 1ms
                 for (byte b : fileContents) {
                     serialPort.writeByte(b);
                     try {
                         Thread.sleep(1);
                     } catch (InterruptedException ex) {
-                        java.util.logging.Logger.getLogger(ClientCore.class.getName()).log(Level.SEVERE, null, ex);
+                        logger.error(ex);
                     }
                 }
             } catch (SerialPortException ex) {
