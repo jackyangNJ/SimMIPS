@@ -4,7 +4,7 @@
 
 void spi_init() {
     //diide wishbone clock by 512
-    out_byte(SPI_SPCR_ADDR, 0x50);
+    out_byte(SPI_SPCR_ADDR, 0x51);
     out_byte(SPI_SPER_ADDR, 0x02);
 }
 
