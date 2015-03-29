@@ -63,13 +63,9 @@ module cpu_top
     output spi_mosi_o,
     input  spi_miso_i,
     /* VGA */
-    input vga_clk_i,
-    output blank_N_o,
-    output sync_N_o,
-    output [9:0] color_r_o,
-    output [9:0] color_g_o,
-    output [9:0] color_b_o,
-    output vga_clk_o,
+    output [3:0] color_r_o,
+    output [3:0] color_g_o,
+    output [3:0] color_b_o,
     output h_syn_o,
     output v_syn_o
 );
@@ -590,26 +586,28 @@ simple_spi_top spi(
     .mosi_o(spi_mosi_o),
     .miso_i(spi_miso_i)
 );
+
+reg[1:0] counter=0;
+always@(posedge clk_per)
+    counter <= counter + 1;
+wire vga_clk = counter == 0;
 vga_top vga(
-    .bus_clk_i(clk_per),
-    .reset_i(rst_i),
-    .stb_i (pbus_slave_7_stb_o),
-    .cyc_i (pbus_slave_7_cyc_o),
-    .sel_i (pbus_slave_7_sel_o),
-    .we_i  (pbus_slave_7_we_o),
-    .adr_i (pbus_slave_7_adr_o),
-    .dat_i (pbus_slave_7_dat_o),
-    .dat_o (vga_dat_o),
-    .ack_o (vga_ack_o),
-    .vga_clk_i(vga_clk_i),
-    .blank_N_o(blank_N_o),
-    .sync_N_o (sync_N_o),
-    .color_r_o(color_r_o),
-    .color_g_o(color_g_o),
-    .color_b_o(color_b_o),
-    .vga_clk_o(vga_clk_o),
-    .h_syn_o  (h_syn_o),
-    .v_syn_o  (v_syn_o)
+        .wb_clk_i(clk_per),
+        .wb_rst_i(rst_i),
+        .wb_cyc_i(pbus_slave_7_cyc_o),
+        .wb_stb_i(pbus_slave_7_stb_o),
+        .wb_adr_i(pbus_slave_7_adr_o),
+        .wb_we_i(pbus_slave_7_we_o),
+        .wb_sel_i(pbus_slave_7_sel_o),
+        .wb_dat_i(pbus_slave_7_dat_o),
+        .wb_dat_o(vga_dat_o),
+        .wb_ack_o(vga_ack_o),
+        .vga_clk_i(vga_clk),
+        .vga_r_o(color_r_o),
+        .vga_g_o(color_g_o),
+        .vga_b_o(color_b_o),
+        .vga_hs_o(h_syn_o),
+        .vga_vs_o(v_syn_o)
 );
 endmodule
 
