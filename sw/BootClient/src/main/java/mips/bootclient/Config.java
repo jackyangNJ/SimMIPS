@@ -27,7 +27,7 @@ class Config {
     public final String filePath = new String();
 
     @CmdOption(names = {"-serial", "-s"}, args = {"portName"}, minCount = -1, maxCount = 2, description = "Specify the serial port(Default:).")
-    public final String serialPortName = "COM3";
+    public final String serialPortName = "COM4";
 
     @CmdOption(names = {"-rate", "-r"}, args = {"portBaudRate"}, minCount = -1, maxCount = 2, description = "Specify the serial baud rate(Default:).")
     public final String serialPortBaudRate = "115200";

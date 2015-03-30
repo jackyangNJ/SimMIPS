@@ -61,7 +61,7 @@ public class ClientCore implements SerialPortEventListener {
      * @return
      */
     public boolean sendBIN(String filePath, long addr) {
-        logger.info("file: "+filePath);
+        logger.info("file: " + filePath);
         File file = new File(filePath);
         InputStream in;
         byte[] fileContents;
@@ -85,13 +85,18 @@ public class ClientCore implements SerialPortEventListener {
                 serialWriteLong(len);
                 serialWriteLong(addr);
 //                serialPort.writeBytes(fileContents);
-                //send one byte every 1ms
+                /* send three byte every 1ms */
+                int i = 0;
                 for (byte b : fileContents) {
                     serialPort.writeByte(b);
-                    try {
-                        Thread.sleep(1);
-                    } catch (InterruptedException ex) {
-                        logger.error(ex);
+                    i++;
+                    if (i > 2) {
+                        i = 0;
+                        try {
+                            Thread.sleep(1);
+                        } catch (InterruptedException ex) {
+                            logger.error(ex);
+                        }
                     }
                 }
             } catch (SerialPortException ex) {
