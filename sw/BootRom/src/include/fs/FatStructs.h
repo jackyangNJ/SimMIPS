@@ -207,7 +207,9 @@ struct biosParmBlock {
           /**
            * Count of sectors occupied by one FAT on FAT32 volumes.
            */
-  uint32_t sectorsPerFat32;
+//  uint32_t sectorsPerFat32;
+  uint16_t sectorsPerFat32Low;
+  uint16_t sectorsPerFat32High;
           /**
            * This field is only defined for FAT32 media and does not exist on
            * FAT12 and FAT16 media.
@@ -228,7 +230,9 @@ struct biosParmBlock {
            * Cluster number of the first cluster of the root directory for FAT32.
            * This usually 2 but not required to be 2.
            */
-  uint32_t fat32RootCluster;
+//  uint32_t fat32RootCluster;
+  uint16_t fat32RootClusterLow;
+  uint16_t fat32RootClusterHigh;
           /**
            * Sector number of FSINFO structure in the reserved area of the
            * FAT32 volume. Usually 1.

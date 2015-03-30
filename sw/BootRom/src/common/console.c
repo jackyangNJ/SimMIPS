@@ -33,12 +33,12 @@ int console_get_command(char * parameter) {
             rtn = CMD_DIR;
             break;
         case 'E':
-            rtn = CMD_RUN;
             strcpy(parameter, &str_buf[7]);
+            rtn = CMD_RUN;
             break;
         case 'G':
-            rtn = CMD_GO;
             strcpy(parameter, &str_buf[3]);
+            rtn = CMD_GO;
             break;
         case 'H':
             rtn = CMD_HELP;
@@ -50,15 +50,16 @@ int console_get_command(char * parameter) {
             rtn = CMD_NULL;
             break;
         case 'S':
+            strcpy(parameter, &str_buf[5]);
             rtn = CMD_SHOW;
             break;
         case 'W':
-            rtn = CMD_WRITE;
             strcpy(parameter, &str_buf[6]);
+            rtn = CMD_WRITE;
             break;
         case 'R':
-            rtn = CMD_READ;
             strcpy(parameter, &str_buf[5]);
+            rtn = CMD_READ;
             break;
         default:
             rtn = CMD_UNKNOWN;
@@ -125,7 +126,7 @@ int console_transfer() {
 void console_loop() {
     int cmd;
     uint32_t addr, value;
-    char parameter[100];
+    char parameter[512];
     uint8_t buffer[512];
     int j, k;
     while (true) {
