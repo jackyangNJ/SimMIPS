@@ -19,10 +19,6 @@ As for peripherals, we provide UART, SPI Master Controller, Timer, RTC(real time
 
 Apart from hardware implementation on FPGA, there is still a long way to go before launching Hello World program. We develop boot software system to assist developers. You can run **BootClient** software on PC to transmit an elf-format executable program over serial line which is connected between PC and FPGA board. Then the **BootRom** in FPGA will store the program in memory and execute it. In another way, you could store the executable program in SD card before plugged in and choose *Boot from SD card* when power up the board.
 
-## USAGE ##
-Now this project will be used as an experimental platform for Computer System Comprehensive Experiment course in department of Computer Science in Nanjing University.  This course is compulsory for juniors. Experiments of the course covers multiple fields of Computer Science, including computer architecture, operating system and compiler design and will be conducted on SimMIPS.
-You could also use SimMIPS in your project as a simple embedded processor for computing and controlling.
-
 ## REQUIREMENTS ##
 Our project only supports Altera DE2-70 now. In the future we will add Nexys 4. It would be better if you have either one of these two boards. Other boards are OK and you may need to do port work yourself. Please refer to [SimMIPS wiki][1] when you encounter problems.
 
