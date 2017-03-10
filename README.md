@@ -25,6 +25,6 @@ Our project only supports Altera DE2-70 now. In the future we will add Nexys 4. 
 ## MORE DETAILS ##
 For more details, welcome to [SimMIPS wiki][1]
 
-[1]:https://github.com/jackyang74/SimMIPS/wiki
+[1]:https://github.com/jackyangNJ/SimMIPS/wiki
 [2]:http://opencores.org/opencores,wishbone
-[3]:https://raw.githubusercontent.com/jackyang74/SimMIPS/master/doc/CPU.jpg
+[3]:https://raw.githubusercontent.com/jackyangNJ/SimMIPS/master/doc/CPU.jpg
